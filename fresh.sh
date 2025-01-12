@@ -28,6 +28,7 @@ echo "Installing apps from Homebrew..."
 
 # Install apps from Homebrew
 brew install discord
+brew install 1password
 brew install arc
 brew install raycast
 brew install obs
@@ -42,6 +43,11 @@ brew install android-studio
 brew install cold-turkey-blocker
 brew install warp
 brew install uv
+brew install telegram
+brew install anki
+brew install windsurf
+brew install zoom
+brew install git-lfs
 brew install mas
 
 # Install apps from Mac App Store
@@ -52,13 +58,19 @@ mas lucky Hidden Bar
 mas lucky Pipad
 mas lucky TestFlight
 mas lucky Amphetamine
+mas lucky Keynote
+mas lucky Notes
+mas lucky Pages
 
-echo "Cleaning up..."
 
-brew cleanup
+
+
 
 # Initialize git
 git --version
+
+# Install Command Line Tools
+xcode-select --install
 
 # Install bun
 curl -fsSL https://bun.sh/install | bash

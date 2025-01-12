@@ -82,8 +82,6 @@ zstyle ':omz:update' mode auto      # update automatically without asking
 
 
 
-
-plugins=(git)
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
