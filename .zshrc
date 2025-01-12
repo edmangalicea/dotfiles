@@ -84,9 +84,6 @@ zstyle ':omz:update' mode auto      # update automatically without asking
 
 
 plugins=(git)
-
-
-
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
@@ -123,24 +120,10 @@ source $ZSH/oh-my-zsh.sh
 export PATH="/Users/edmanalicea/.local/bin:$PATH"
 
 
-fpath+=~/.zfunc
-
-
-
-
-
-
-#This make it so that using pip outside of a virtual environment is impossible
-#export PIP_REQUIRE_VIRTUALENV=true
-
-
-
-#nstall OpenJDK distribution called Azul Zulu using Homebrew. This distribution offers JDKs for both Apple Silicon and Intel Macs.
+# Install OpenJDK distribution called Azul Zulu using Homebrew. This distribution offers JDKs for both Apple Silicon and Intel Macs.
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home
 
 
-
-# Bun 
 # bun completions
 [ -s "/Users/edmanalicea/.bun/_bun" ] && source "/Users/edmanalicea/.bun/_bun"
 # bun path
@@ -148,19 +131,14 @@ export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
 
-
+# Set the editor for react
 export REACT_EDITOR=cursoreval
+
+
+
 #the code below is to help setup ruby package manager
-eval "$(rbenv init -)"
-#below is a program that allows you to automatically load .env variables so you dont have to set them up
-
-# eval "$(direnv hook zsh)"source /Users/edmanalicea/.config/op/plugins.sh
-# source /Users/edmanalicea/.config/op/plugins.sh
-
 export OP_PLUGIN_ALIASES_SOURCED=1
 alias cdk="op plugin run -- cdk"
-
-
 
 
 # Android SDK
@@ -169,30 +147,16 @@ export PATH=$PATH:$ANDROID_HOME/emulator
 export PATH=$PATH:$ANDROID_HOME/platform-tools
 
 
-
-
-
-
-
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/Users/edmanalicea/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/edmanalicea/google-cloud-sdk/path.zsh.inc'; fi
 
 # The next line enables shell command completion for gcloud.
 if [ -f '/Users/edmanalicea/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/edmanalicea/google-cloud-sdk/completion.zsh.inc'; fi
 
-
-
 # 1Password SSH Agent Initialization
 export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
 
-
-# pyenv configuration
-export PATH="$(pyenv root)/shims:$PATH"
-eval "$(pyenv init --path)"
-eval "$(pyenv init -)"
-
-
-# fnm
+# Fnm (Fast node Manager)
 FNM_PATH="/Users/edmanalicea/Library/Application Support/fnm"
 if [ -d "$FNM_PATH" ]; then
   export PATH="/Users/edmanalicea/Library/Application Support/fnm:$PATH"
