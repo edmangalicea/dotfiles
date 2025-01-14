@@ -20,9 +20,7 @@ On a new mac, run the git.sh to setup ssh keys and then run the fresh.sh to inst
 Create the below script and copy the contents of #2
 
 ```bash
-touch install.sh
-chmod +x install.sh
-nano install.sh
+touch install.sh && chmod +x install.sh && nano install.sh
 ```
 
 
