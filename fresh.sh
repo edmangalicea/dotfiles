@@ -21,7 +21,7 @@ if ! xcode-select -p &>/dev/null; then
 fi
 
 # Check for Oh My Zsh and install if we don't have it
-if test ! $(which omz); then
+if [ ! -d "$HOME/.oh-my-zsh" ]; then
   /bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/HEAD/tools/install.sh)"
 fi
 
@@ -35,6 +35,10 @@ fi
 
 print_step "Updating Homebrew"
 brew update
+
+# Setup Rosetta 2 emulation 
+print_step "Setting up Rosetta 2 emulation"
+sudo softwareupdate --install-rosetta --agree-to-license
 
 # Install apps from Homebrew
 print_step "Installing apps from Homebrew..."
@@ -61,6 +65,9 @@ brew install zoom
 brew install git-lfs
 brew install utm
 brew install powerlevel10k
+brew install watchman
+brew install --cask zulu@17
+
 
 
 

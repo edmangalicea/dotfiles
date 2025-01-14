@@ -89,10 +89,10 @@ Add the ssh key to [github](https://github.com/settings/keys)
 
 ### 8 
 
-Copy the repo to the home directory
+Source zshrc and copy the repo to the home directory
 
 ```bash
-git clone --bare git@github.com:edmangalicea/dotfiles.git $HOME/.cfg
+source ~/.zshrc && git clone --bare git@github.com:edmangalicea/dotfiles.git $HOME/.cfg
 ```
 
 ### 9 
@@ -100,7 +100,7 @@ git clone --bare git@github.com:edmangalicea/dotfiles.git $HOME/.cfg
 Run git checkout to move the files to the home directory
 
 ```bash
-config checkout
+rm install.sh git.sh .zshrc && config checkout
 ```
 
 ### 10
