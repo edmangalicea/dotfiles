@@ -56,15 +56,14 @@ brew install powerlevel10k
 
 # Install apps from Mac App Store
 echo "Installing apps from Mac App Store..."
-mas lucky Xcode
-mas lucky Todoist
-mas lucky Hidden Bar
-mas lucky Pipad
-mas lucky TestFlight
-mas lucky Amphetamine
-mas lucky Keynote
-mas lucky Notes
-mas lucky Pages
+mas install 497799835 # Xcode
+mas install 585829637 # Todoist
+mas install 1452453066  # Hidden Bar
+mas install 1482575592 # Pipad
+mas install 899247664 # TestFlight
+mas install 937984704 # Amphetamine
+mas install 409183694 # Keynote
+mas install 409201541 # Pages
 
 #install fnm
 brew install fnm
@@ -84,5 +83,7 @@ curl -fsSL https://bun.sh/install | bash
 # Source the zshrc file
 source ~/.zshrc
 
+#Accept Xcode license
+sudo xcodebuild -license accept
 
 echo "Finished setting up your Mac!"
