@@ -52,9 +52,7 @@ Now run the install.sh script
 Create git.sh
 
 ```bash
-touch git.sh
-chmod +x git.sh
-nano git.sh
+touch git.sh && chmod +x git.sh && nano git.sh
 ```
 
 ###  5
