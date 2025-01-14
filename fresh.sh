@@ -1,3 +1,6 @@
+# Change the shebang line at the top of the file
+#!/usr/bin/env zsh
+
 echo "Setting up your Mac..."
 
 
@@ -62,7 +65,9 @@ mas lucky Keynote
 mas lucky Notes
 mas lucky Pages
 
-
+#install fnm
+brew install fnm
+eval "$(fnm env --use-on-cd --shell zsh)"
 
 
 

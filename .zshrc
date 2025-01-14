@@ -132,8 +132,6 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 # Set the editor for react
 export REACT_EDITOR=cursoreval
 
-
-
 #the code below is to help setup ruby package manager
 export OP_PLUGIN_ALIASES_SOURCED=1
 alias cdk="op plugin run -- cdk"
@@ -144,12 +142,6 @@ export ANDROID_HOME=/Users/edmanalicea/Library/Android/sdk
 export PATH=$PATH:$ANDROID_HOME/emulator
 export PATH=$PATH:$ANDROID_HOME/platform-tools
 
-
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/Users/edmanalicea/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/edmanalicea/google-cloud-sdk/path.zsh.inc'; fi
-
-# The next line enables shell command completion for gcloud.
-if [ -f '/Users/edmanalicea/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/edmanalicea/google-cloud-sdk/completion.zsh.inc'; fi
 
 # 1Password SSH Agent Initialization
 export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
@@ -167,4 +159,4 @@ eval "$(fnm env --use-on-cd --shell zsh)"
 #Below is the alias for the dotfiles repo
 #This is to make it so that you can use git to manage your dotfiles
 # See https://www.atlassian.com/git/tutorials/dotfiles for more information
-alias config='/usr/bin/git --git-dir=/Users/edmanalicea/.cfg/ --work-tree=/Users/edmanalicea'
+alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
