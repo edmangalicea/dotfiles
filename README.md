@@ -1,15 +1,20 @@
 # Edman's Dotfiles
 
-This dotfile setup is used for new mac installations.
+This dotfile setup is used for new mac installations. After setup the .cfg directory will become a git bare repository. You will then be able to use the config alias instead of git to interact with dotfiles fromn anywhere on the system.
+
+This is based on the [atlasian dotfiles setup](https://www.atlassian.com/git/tutorials/dotfiles).
+
+Example commands:
+```bash
+config status
+config add .zshrc
+config commit -m "Added zshrc"
+config push
+```
 
 # Install 
 
-On a new mac, run the git.sh to setup ssh keys and then run the fresh.sh to install the necessary apps and configure the dotfiles.
-
-```bash
-./git.sh
-./fresh.sh
-```
+On a new mac, run the steps below to setup the dotfiles.
 
 
 # Steps to take 
@@ -17,7 +22,7 @@ On a new mac, run the git.sh to setup ssh keys and then run the fresh.sh to inst
 
 ### 1 
 
-Create the below script and copy the contents of #2
+Run the below command and copy the contents of #2 into the nano editor.
 
 ```bash
 touch install.sh && chmod +x install.sh && nano install.sh
@@ -49,7 +54,7 @@ Now run the install.sh script
 
 ### 4 
 
-Create git.sh
+Run the following command. This will create the git.sh script and open it in nano.
 
 ```bash
 touch git.sh && chmod +x git.sh && nano git.sh
@@ -57,7 +62,7 @@ touch git.sh && chmod +x git.sh && nano git.sh
 
 ###  5
 
-Copy the below into git.sh Generates ssh key and copies to clipboard
+Copy the below into git.sh. Generates ssh key and copies to clipboard
 
 ```bash
 echo "Generating SSH key..."
@@ -90,5 +95,29 @@ Copy the repo to the home directory
 git clone --bare git@github.com:edmangalicea/dotfiles.git $HOME/.cfg
 ```
 
+### 9 
 
+Run git checkout to move the files to the home directory
 
+```bash
+config checkout
+```
+
+### 10
+
+Run the fresh.sh script
+
+```bash
+./fresh.sh
+```
+
+### 11 Congrats!
+
+You have now setup the dotfiles. You can now use the config alias to interact with dotfiles fromn anywhere on the system.
+
+```bash
+config status
+config add .zshrc
+config commit -m "Added zshrc"
+config push
+```

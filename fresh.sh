@@ -101,3 +101,6 @@ print_step "Finished setting up your Mac!"
 
 # Source the zshrc file
 source ~/.zshrc
+
+# Don't show untracked files in git. So the entire home directory is not shown in git status.
+config config status.showUntrackedFiles no
