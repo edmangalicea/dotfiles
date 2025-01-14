@@ -11,7 +11,7 @@ source ~/.zshrc
 
 # Generate SSH key
 echo "🔑 Generating SSH key..."
-ssh-keygen -t ed25519 -C "edmangalicea@gmail.com"
+ssh-keygen -t ed25519 -C "edmangalicea@gmail.com" -f ~/.ssh/id_ed25519 ""
 eval "$(ssh-agent -s)"
 ssh-add --apple-use-keychain ~/.ssh/id_ed25519
 pbcopy < ~/.ssh/id_ed25519.pub
