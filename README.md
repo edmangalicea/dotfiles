@@ -21,8 +21,8 @@ Create the below script and copy the contents of #2
 
 ```bash
 touch install.sh
-nano install.sh
 chmod +x install.sh
+nano install.sh
 ```
 
 
@@ -55,6 +55,7 @@ Create git.sh
 
 ```bash
 touch git.sh
+chmod +x git.sh
 nano git.sh
 ```
 
@@ -73,7 +74,9 @@ echo "SSH key generated and copied to clipboard. Please add it to your GitHub ac
 
 ### 6 
 
-Add the ssh key to github
+Add the ssh key to [github](https://github.com/settings/keys)
+
+
 
 ### 7 
 
