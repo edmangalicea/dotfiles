@@ -9,8 +9,7 @@ if test ! $(which omz); then
   /bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/HEAD/tools/install.sh)"
 fi
 
-# Install Powerlevel10k
-git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+
 
 
 # Check for Homebrew and install if we don't have it
@@ -52,6 +51,8 @@ brew install windsurf
 brew install zoom
 brew install git-lfs
 brew install mas
+brew install utm
+brew install powerlevel10k
 
 # Install apps from Mac App Store
 echo "Installing apps from Mac App Store..."
