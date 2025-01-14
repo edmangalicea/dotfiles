@@ -1,5 +1,11 @@
 #!/usr/bin/env zsh
 
+#Cache sudo credentials. So we don't have to enter it again.
+sudo -v
+
+# Keep sudo credentials valid for 10 minutes
+while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+
 # Print with colors and formatting
 print_step() {
   echo "\n\033[1;36m$1...\033[0m"
@@ -22,7 +28,8 @@ fi
 
 # Check for Oh My Zsh and install if we don't have it
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
-  /bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/HEAD/tools/install.sh)"
+    print_step "Installing Oh My Zsh"
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/HEAD/tools/install.sh)" "" --unattended
 fi
 
 # Install Homebrew with better error handling
