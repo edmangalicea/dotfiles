@@ -68,13 +68,21 @@ pbcopy < ~/.ssh/id_ed25519.pub
 echo "SSH key generated and copied to clipboard. Please add it to your GitHub account."
 ```
 
-### 6 
+### 6
+
+Run the git.sh script
+
+```bash
+./git.sh
+```
+
+### 7
 
 Add the ssh key to [github](https://github.com/settings/keys)
 
 
 
-### 7 
+### 8 
 
 Copy the repo to the home directory
 

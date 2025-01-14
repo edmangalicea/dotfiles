@@ -1,34 +1,43 @@
-# Change the shebang line at the top of the file
 #!/usr/bin/env zsh
 
-echo "Setting up your Mac..."
+# Print with colors and formatting
+print_step() {
+  echo "\n\033[1;36m$1...\033[0m"
+}
 
+set -e
+trap 'echo "An error occurred. Exiting..." ERR
+
+print_step "Setting up your Mac..."
+
+# Check for Command Line Tools first as they're needed for git and homebrew
+if ! xcode-select -p &>/dev/null; then
+    print_step "Installing Command Line Tools"
+    xcode-select --install
+    # Wait for installation to complete
+    until xcode-select -p &>/dev/null; do
+        sleep 5
+    done
+fi
 
 # Check for Oh My Zsh and install if we don't have it
 if test ! $(which omz); then
   /bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/HEAD/tools/install.sh)"
 fi
 
-
-
-
-# Check for Homebrew and install if we don't have it
-if test ! $(which brew); then
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-  echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $HOME/.zprofile
-  eval "$(/opt/homebrew/bin/brew shellenv)"
+# Install Homebrew with better error handling
+if ! command -v brew &>/dev/null; then
+    print_step "Installing Homebrew"
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $HOME/.zprofile
+    eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
-# Install Fnm (Fast node Manager)
-curl -fsSL https://fnm.vercel.app/install | zsh
-
-# Update Homebrew
+print_step "Updating Homebrew"
 brew update
 
-echo "Installing apps from Homebrew..."
-
 # Install apps from Homebrew
+print_step "Installing apps from Homebrew..."
 brew install discord
 brew install 1password
 brew install arc
@@ -50,12 +59,19 @@ brew install anki
 brew install windsurf
 brew install zoom
 brew install git-lfs
-brew install mas
 brew install utm
 brew install powerlevel10k
 
+
+
+# Install Mac App Store apps. Check if mas is installed. Install if not.
+print_step "Installing Mac App Store apps"
+if ! command -v mas &>/dev/null; then
+    brew install mas
+fi
+
 # Install apps from Mac App Store
-echo "Installing apps from Mac App Store..."
+print_step "Installing apps from Mac App Store..."
 mas install 497799835 # Xcode
 mas install 585829637 # Todoist
 mas install 1452453066  # Hidden Bar
@@ -66,24 +82,22 @@ mas install 409183694 # Keynote
 mas install 409201541 # Pages
 
 #install fnm
+print_step "Installing fnm"
 brew install fnm
 eval "$(fnm env --use-on-cd --shell zsh)"
 
-
-
-# Initialize git
-git --version
-
-# Install Command Line Tools
-xcode-select --install
-
 # Install bun
+print_step "Installing bun"
 curl -fsSL https://bun.sh/install | bash
+
+# Accept Xcode license
+print_step "Accepting Xcode license"
+sudo xcodebuild -license accept
+
+print_step "Making Development directory"
+mkdir -p ~/Development
+
+print_step "Finished setting up your Mac!"
 
 # Source the zshrc file
 source ~/.zshrc
-
-#Accept Xcode license
-sudo xcodebuild -license accept
-
-echo "Finished setting up your Mac!"
