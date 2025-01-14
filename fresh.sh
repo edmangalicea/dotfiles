@@ -6,7 +6,7 @@ print_step() {
 }
 
 set -e
-trap 'echo "An error occurred. Exiting..." ERR
+trap 'echo "An error occurred. Exiting..."' ERR
 
 print_step "Setting up your Mac..."
 
