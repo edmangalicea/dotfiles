@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 
 # Exit on error
 set -e
@@ -12,8 +12,8 @@ echo "alias config='/usr/bin/git --git-dir=\$HOME/.cfg/ --work-tree=\$HOME'" >> 
 echo ".cfg" >> ~/.gitignore
 
 # Define config function since sourcing might not work in script
-config() {
-    /usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME "$@"
+function config() {
+    /usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME $@
 }
 
 # Generate SSH key
@@ -38,7 +38,7 @@ echo "✅ SSH connection successful!"
 
 # Clone and setup dotfiles
 echo "📦 Cloning dotfiles repository..."
-if [ ! -d "$HOME/.cfg" ]; then
+if [[ ! -d "$HOME/.cfg" ]]; then
     git clone --bare git@github.com:edmangalicea/dotfiles.git $HOME/.cfg
 else
     echo "⚠️  .cfg directory already exists, skipping clone"
@@ -49,7 +49,7 @@ config checkout 2>&1 | grep -E "\s+\." | awk {'print $1'} | xargs -I{} dirname {
 config checkout
 
 # Run fresh.sh if it exists
-if [ -f "./fresh.sh" ]; then
+if [[ -f "./fresh.sh" ]]; then
     echo "🛠️  Running fresh.sh..."
     chmod +x ./fresh.sh
     ./fresh.sh
