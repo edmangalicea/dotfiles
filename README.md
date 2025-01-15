@@ -15,6 +15,8 @@ curl -o- https://raw.githubusercontent.com/edmangalicea/dotfiles/main/install.sh
 
 3. Press Enter in the terminal to continue the installation
 
+4. When the installation is complete, restart your terminal or run `source ~/.zshrc` to use the `config` command
+
 # What the installer does
 
 1. Creates necessary configuration files (.zshrc, .gitignore)
