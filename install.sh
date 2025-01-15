@@ -8,10 +8,12 @@ touch ~/.zshrc ~/.gitignore
 echo "alias config='/usr/bin/git --git-dir=\$HOME/.cfg/ --work-tree=\$HOME'" >> ~/.zshrc
 echo ".cfg" >> ~/.gitignore
 source ~/.zshrc
+echo "Finished creating configuration files. Press Enter to continue..."
+read
 
 # Generate SSH key
 echo "🔑 Generating SSH key..."
-ssh-keygen -t ed25519 -C "edmangalicea@gmail.com" -f ~/.ssh/id_ed25519 ""
+ssh-keygen -t ed25519 -C "edmangalicea@gmail.com" -f ~/.ssh/id_ed25519 -N ""
 eval "$(ssh-agent -s)"
 ssh-add --apple-use-keychain ~/.ssh/id_ed25519
 pbcopy < ~/.ssh/id_ed25519.pub
