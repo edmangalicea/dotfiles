@@ -28,13 +28,13 @@ echo "Press Enter when you've added the key to continue..."
 read -r REPLY
 
 # Test SSH connection
-echo "🔄 Testing SSH connection to GitHub..."
+printf "🔄 Testing SSH connection to GitHub..."
 while ! ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; do
     echo "❌ SSH connection failed. Please make sure you've added the key to GitHub"
     echo "Press Enter to try again..."
     read -r REPLY
 done
-echo "✅ SSH connection successful!"
+printf "✅ SSH connection successful!\n"
 
 # Clone and setup dotfiles
 echo "📦 Cloning dotfiles repository..."
