@@ -8,7 +8,7 @@ This is based on the [atlasian dotfiles setup](https://www.atlassian.com/git/tut
 
 1. Run this command to download and execute the installation script:
 ```bash
-curl -o- https://raw.githubusercontent.com/edmangalicea/dotfiles/main/install.sh | bash
+curl -o- https://raw.githubusercontent.com/edmangalicea/dotfiles/main/install.sh | zsh
 ```
 
 2. When prompted, add the SSH key to your GitHub account at [github.com/settings/keys](https://github.com/settings/keys)
