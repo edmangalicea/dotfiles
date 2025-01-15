@@ -45,7 +45,9 @@ else
 fi
 
 echo "🔄 Checking out dotfiles..."
-config checkout 2>&1 | grep -E "\s+\." | awk {'print $1'} | xargs -I{} dirname {} | xargs -I{} mkdir -p {}
+#config checkout 2>&1 | grep -E "\s+\." | awk {'print $1'} | xargs -I{} dirname {} | xargs -I{} mkdir -p {}
+# Remove install.sh and .zshrc so that config checkout doesn't fail
+rm install.sh .zshrc
 config checkout
 
 # Run fresh.sh if it exists
