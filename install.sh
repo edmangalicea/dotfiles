@@ -25,14 +25,14 @@ pbcopy < ~/.ssh/id_ed25519.pub
 echo "SSH key has been copied to clipboard"
 echo "⚠️  Please add the SSH key to your GitHub account at: https://github.com/settings/keys"
 echo "Press Enter when you've added the key to continue..."
-read
+read -r REPLY
 
 # Test SSH connection
 echo "🔄 Testing SSH connection to GitHub..."
 while ! ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; do
     echo "❌ SSH connection failed. Please make sure you've added the key to GitHub"
     echo "Press Enter to try again..."
-    read
+    read -r REPLY
 done
 echo "✅ SSH connection successful!"
 
