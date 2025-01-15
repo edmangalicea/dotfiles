@@ -6,6 +6,7 @@ sudo -v
 # Keep sudo credentials valid for 10 minutes
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
+
 # Print with colors and formatting
 print_step() {
   echo "\n\033[1;36m$1...\033[0m"

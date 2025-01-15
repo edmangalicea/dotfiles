@@ -2,6 +2,8 @@
 
 This dotfile setup is used for new mac installations. After setup the .cfg directory will become a git bare repository. You will then be able to use the config alias instead of git to interact with dotfiles from anywhere on the system.
 
+The $HOME directory will be where all the dotfiles are symlinked to.
+
 This is based on the [atlasian dotfiles setup](https://www.atlassian.com/git/tutorials/dotfiles).
 
 # Quick Install
