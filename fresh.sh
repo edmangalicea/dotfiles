@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 
 #Cache sudo credentials. So we don't have to enter it again.
+export SUDO_ASKPASS="/usr/bin/true"
 sudo -v
 
 # Keep sudo credentials valid for 10 minutes
@@ -36,7 +37,7 @@ fi
 # Install Homebrew with better error handling
 if ! command -v brew &>/dev/null; then
     print_step "Installing Homebrew"
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $HOME/.zprofile
     eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
@@ -46,7 +47,7 @@ brew update
 
 # Setup Rosetta 2 emulation 
 print_step "Setting up Rosetta 2 emulation"
-sudo softwareupdate --install-rosetta --agree-to-license
+softwareupdate --install-rosetta --agree-to-license
 
 # Install apps from Homebrew
 print_step "Installing apps from Homebrew..."
@@ -107,10 +108,17 @@ curl -fsSL https://bun.sh/install | bash
 
 # Accept Xcode license
 print_step "Accepting Xcode license"
-sudo xcodebuild -license accept
+xcodebuild -license accept
 
 print_step "Making Development directory"
 mkdir -p ~/Development
+
+# At the end of your script
+print_step "Cleaning up..."
+brew cleanup
+
+print_step "Verifying installations..."
+brew doctor
 
 print_step "Finished setting up your Mac!"
 
