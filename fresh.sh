@@ -77,6 +77,7 @@ brew install powerlevel10k
 brew install watchman
 brew install --cask zulu@17
 brew install tldr
+brew install --cask keka
 
 
 
