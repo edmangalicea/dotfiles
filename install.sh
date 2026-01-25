@@ -12,14 +12,6 @@ sudo -v
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 export SUDO_ASKPASS="/usr/bin/true"  # Prevent GUI password prompts
 
-# When running fresh.sh, use sudo preservation
-if [[ -f "./fresh.sh" ]]; then
-    echo "🛠️  Running fresh.sh..."
-    chmod +x ./fresh.sh
-    sudo -v  # Refresh sudo timestamp before running fresh.sh
-    ./fresh.sh
-fi
-
 # Create initial config files
 echo "📝 Creating configuration files..."
 touch ~/.zshrc ~/.gitignore

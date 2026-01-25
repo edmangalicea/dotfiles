@@ -45,63 +45,16 @@ fi
 print_step "Updating Homebrew"
 brew update
 
-# Setup Rosetta 2 emulation 
+# Setup Rosetta 2 emulation
 print_step "Setting up Rosetta 2 emulation"
 softwareupdate --install-rosetta --agree-to-license
 
-# Install apps from Homebrew
-print_step "Installing apps from Homebrew..."
-brew install discord
-brew install 1password
-brew install arc
-brew install raycast
-brew install obs
-brew install slack
-brew install spotify
-brew install calibre
-brew install vlc
-brew install cursor
-brew install rectangle
-brew install figma
-brew install android-studio
-brew install cold-turkey-blocker
-brew install warp
-brew install uv
-brew install telegram
-brew install anki
-brew install windsurf
-brew install zoom
-brew install git-lfs
-brew install utm
-brew install powerlevel10k
-brew install watchman
-brew install --cask zulu@17
-brew install tldr
-brew install --cask keka
+# Install all packages from Brewfile
+print_step "Installing packages from Brewfile"
+brew bundle --file=~/Brewfile
 
-
-
-
-# Install Mac App Store apps. Check if mas is installed. Install if not.
-print_step "Installing Mac App Store apps"
-if ! command -v mas &>/dev/null; then
-    brew install mas
-fi
-
-# Install apps from Mac App Store
-print_step "Installing apps from Mac App Store..."
-mas install 497799835 # Xcode
-mas install 585829637 # Todoist
-mas install 1452453066  # Hidden Bar
-mas install 1482575592 # Pipad
-mas install 899247664 # TestFlight
-mas install 937984704 # Amphetamine
-mas install 409183694 # Keynote
-mas install 409201541 # Pages
-
-#install fnm
-print_step "Installing fnm"
-brew install fnm
+# Initialize fnm
+print_step "Initializing fnm"
 eval "$(fnm env --use-on-cd --shell zsh)"
 
 # Install bun
@@ -126,6 +79,11 @@ print_step "Finished setting up your Mac!"
 
 # Source the zshrc file
 source ~/.zshrc
+
+# Define config function for bare repo management
+function config {
+   /usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME $@
+}
 
 # Don't show untracked files in git. So the entire home directory is not shown in git status.
 config config status.showUntrackedFiles no

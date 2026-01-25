@@ -79,8 +79,7 @@ zstyle ':omz:update' mode auto      # update automatically without asking
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-
-
+plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -130,7 +129,7 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 
 
 # Set the editor for react
-export REACT_EDITOR=cursoreval
+export REACT_EDITOR=cursor
 
 #the code below is to help setup ruby package manager
 export OP_PLUGIN_ALIASES_SOURCED=1
@@ -147,12 +146,6 @@ export PATH=$PATH:$ANDROID_HOME/platform-tools
 export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
 
 # Fnm (Fast node Manager)
-FNM_PATH="/Users/edmanalicea/Library/Application Support/fnm"
-if [ -d "$FNM_PATH" ]; then
-  export PATH="/Users/edmanalicea/Library/Application Support/fnm:$PATH"
-  eval "`fnm env `"
-fi
-
 eval "$(fnm env --use-on-cd --shell zsh)"
 
 

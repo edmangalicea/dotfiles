@@ -4,7 +4,7 @@ This dotfile setup is used for new mac installations. After setup the .cfg direc
 
 The $HOME directory will be where all the dotfiles are symlinked to.
 
-This is based on the [atlasian dotfiles setup](https://www.atlassian.com/git/tutorials/dotfiles).
+This is based on the [atlassian dotfiles setup](https://www.atlassian.com/git/tutorials/dotfiles).
 
 # Quick Install
 
