@@ -23,30 +23,10 @@ function config() {
     /usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME $@
 }
 
-# Generate SSH key
-echo "🔑 Generating SSH key..."
-ssh-keygen -t ed25519 -C "edmangalicea@gmail.com" -f ~/.ssh/id_ed25519 -N ""
-eval "$(ssh-agent -s)"
-ssh-add --apple-use-keychain ~/.ssh/id_ed25519
-pbcopy < ~/.ssh/id_ed25519.pub
-echo "SSH key has been copied to clipboard"
-echo "⚠️  Please add the SSH key to your GitHub account at: https://github.com/settings/keys"
-echo "Press Enter when you've added the key to continue..."
-read -r REPLY < /dev/tty
-
-# Test SSH connection
-printf "🔄 Testing SSH connection to GitHub..."
-while ! ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; do
-    echo "❌ SSH connection failed. Please make sure you've added the key to GitHub"
-    echo "Press Enter to try again..."
-    read -r REPLY < /dev/tty
-done
-printf "✅ SSH connection successful!\n"
-
 # Clone and setup dotfiles
 echo "📦 Cloning dotfiles repository..."
 if [[ ! -d "$HOME/.cfg" ]]; then
-    git clone --bare git@github.com:edmangalicea/dotfiles.git $HOME/.cfg
+    git clone --bare https://github.com/edmangalicea/dotfiles.git $HOME/.cfg
 else
     echo "⚠️  .cfg directory already exists, skipping clone"
 fi
@@ -74,6 +54,7 @@ echo "🔄 Please restart your terminal or run 'source ~/.zshrc' to use the 'con
 
 echo ""
 echo "Post-installation steps:"
-echo "   1. Run 'gh auth login' to authenticate GitHub CLI"
-echo "   2. Sign into 1Password to enable SSH agent"
-echo "   3. Sign into Cursor to sync settings via account"
+echo "   1. Generate SSH key: ssh-keygen -t ed25519 -C \"your@email.com\""
+echo "   2. Add to GitHub: cat ~/.ssh/id_ed25519.pub | pbcopy → github.com/settings/keys"
+echo "   3. Switch remote to SSH: config remote set-url origin git@github.com:edmangalicea/dotfiles.git"
+echo "   4. Authenticate GitHub CLI: gh auth login"
