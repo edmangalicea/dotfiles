@@ -42,26 +42,34 @@ cask "cursor"
 cask "windsurf"
 
 # AI Tools
-# Open source, extensible AI agent that goes beyond code suggestions
-cask "block-goose"
+# Terminal-based AI coding assistant
+cask "claude-code"
+# Menu bar for Claude/Codex usage monitoring
+cask "claudebar"
 # OpenAI's coding agent that runs in your terminal
 cask "codex"
 
 # Browsers
-# Chromium based browser
-cask "arc"
 # Web browser
 cask "google-chrome"
+# Firefox-based browser
+cask "zen"
 
 # Productivity
+# Block websites, games and applications
+cask "cold-turkey-blocker"
+# Screen color temperature controller
+cask "flux-app"
+# Microsoft Office alternative
+cask "libreoffice"
 # Knowledge base that works on top of a local folder of plain text Markdown files
 cask "obsidian"
 # Control your tools with a few keystrokes
 cask "raycast"
 # Move and resize windows using keyboard shortcuts or snap areas
 cask "rectangle"
-# Block websites, games and applications
-cask "cold-turkey-blocker"
+# Speech to text
+cask "superwhisper"
 
 # Communication
 # Voice and text chat software
@@ -73,15 +81,9 @@ cask "telegram"
 # Video communication and virtual meeting platform
 cask "zoom"
 
-# Design
-# Collaborative team software
-cask "figma"
-
 # Media
 # E-books management software
 cask "calibre"
-# Memory training application
-cask "anki"
 # Open-source software for live streaming and screen recording
 cask "obs"
 # Music streaming service
@@ -90,12 +92,8 @@ cask "spotify"
 cask "vlc"
 
 # Utilities
-# File archiver
-cask "keka"
 # Open-source keystroke visualiser
 cask "keycastr"
-# Adaptive brightness for external displays
-cask "lunar"
 # Virtual machines UI using QEMU
 cask "utm"
 # Rust-based terminal
@@ -109,3 +107,10 @@ vscode "anthropic.claude-code"
 vscode "openai.chatgpt"
 vscode "rooveterinaryinc.roo-cline"
 vscode "saoudrizwan.claude-dev"
+
+# ============================================
+# Mac App Store
+# ============================================
+
+# Screen time limiter
+mas "Jomo - Screen Time Blocker", id: 1609960918
