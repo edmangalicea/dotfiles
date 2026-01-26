@@ -53,6 +53,11 @@ fi
 
 echo "🔄 Checking out dotfiles..."
 #config checkout 2>&1 | grep -E "\s+\." | awk {'print $1'} | xargs -I{} dirname {} | xargs -I{} mkdir -p {}
+
+# Ensure directories exist before checkout
+mkdir -p ~/.ssh && chmod 700 ~/.ssh
+mkdir -p ~/.config/gh && chmod 700 ~/.config/gh
+
 # Remove install.sh and .zshrc so that config checkout doesn't fail
 rm install.sh .zshrc
 config checkout
@@ -66,3 +71,9 @@ fi
 
 echo "✅ Installation complete!"
 echo "🔄 Please restart your terminal or run 'source ~/.zshrc' to use the 'config' command"
+
+echo ""
+echo "Post-installation steps:"
+echo "   1. Run 'gh auth login' to authenticate GitHub CLI"
+echo "   2. Sign into 1Password to enable SSH agent"
+echo "   3. Sign into Cursor to sync settings via account"

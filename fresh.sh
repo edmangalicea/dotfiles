@@ -68,6 +68,14 @@ xcodebuild -license accept
 print_step "Making Development directory"
 mkdir -p ~/Development
 
+# Setup directory permissions
+print_step "Setting up directory permissions"
+mkdir -p ~/.ssh && chmod 700 ~/.ssh
+[[ -f ~/.ssh/config ]] && chmod 600 ~/.ssh/config
+mkdir -p ~/.config/gh && chmod 700 ~/.config/gh
+
+echo "Note: Run 'gh auth login' to authenticate with GitHub CLI"
+
 # At the end of your script
 print_step "Cleaning up..."
 brew cleanup
