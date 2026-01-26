@@ -38,8 +38,8 @@ echo "🔄 Checking out dotfiles..."
 mkdir -p ~/.ssh && chmod 700 ~/.ssh
 mkdir -p ~/.config/gh && chmod 700 ~/.config/gh
 
-# Remove install.sh and .zshrc so that config checkout doesn't fail
-rm install.sh .zshrc
+# Remove .zshrc so that config checkout doesn't fail (repo has the real one)
+rm -f ~/.zshrc
 config checkout
 
 # Run fresh.sh if it exists
