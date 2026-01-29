@@ -25,7 +25,7 @@ The install script automatically installs [Claude Code](https://claude.ai) and l
 claude --init
 ```
 
-Claude reads `CLAUDE.md`, runs the `/install` command, and offers two modes:
+Claude receives the `/install` instruction via the Setup hook and offers two modes:
 
 - **Agentic** — Claude runs each module interactively, asks about preferences (Rosetta, Brewfile contents, macOS defaults, Node version), and handles errors as they come up
 - **Deterministic** — Claude runs `~/fresh.sh` directly with no questions asked
@@ -133,7 +133,6 @@ brew bundle cleanup --file=~/Brewfile --force  # remove unlisted entries
 ├── .zprofile                       # Homebrew shellenv
 ├── .zshrc                          # Shell config (plugins, paths, aliases)
 ├── Brewfile                        # Homebrew packages, casks, MAS apps
-├── CLAUDE.md                       # Claude Code instructions (points to /install)
 ├── fresh.sh                        # Modular setup orchestrator
 ├── install.sh                      # Bootstrap entry point
 └── README.md                       # This file

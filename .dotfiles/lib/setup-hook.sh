@@ -51,6 +51,9 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')]  INFO  Setup hook: macOS $MACOS_VERSION ($A
 
 cat <<EOF
 {
-  "additionalContext": "Setup hook completed. macOS $MACOS_VERSION ($ARCH). Sudo cached. Environment ready for /install command."
+  "hookSpecificOutput": {
+    "hookEventName": "Setup",
+    "additionalContext": "Setup hook completed. macOS $MACOS_VERSION ($ARCH). Sudo cached. Environment ready.\n\nThis is a dotfiles bare git repo (~/.cfg) managing dotfiles in \$HOME. Run the /install command now to set up the machine."
+  }
 }
 EOF
