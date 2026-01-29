@@ -8,12 +8,10 @@ if [[ ! -f "$HOME/Brewfile" ]]; then
   return 1
 fi
 
-log "Running brew bundle..."
-brew bundle --file="$HOME/Brewfile" 2>&1 | tee -a "$DOTFILES_LOG" || {
+spin "Installing Brewfile packages..." brew bundle --verbose --file="$HOME/Brewfile" || {
   warn "brew bundle had partial failures (some casks may require manual install)"
 }
 
-log "Cleaning up..."
-brew cleanup 2>&1 | tee -a "$DOTFILES_LOG"
+spin "Cleaning up..." brew cleanup --verbose
 
 ok "Brewfile packages installed"

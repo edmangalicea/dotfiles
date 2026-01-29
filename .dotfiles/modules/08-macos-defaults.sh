@@ -6,36 +6,37 @@ step "macOS Defaults"
 log "Setting macOS preferences..."
 
 # ── Finder ───────────────────────────────────────────────────────────────────
-# Show all file extensions
+log "Finder: Show all file extensions"
 defaults write NSGlobalDomain AppleShowAllExtensions -bool true
 
-# Show hidden files in Finder
+log "Finder: Show hidden files"
 defaults write com.apple.finder AppleShowAllFiles -bool true
 
-# Show path bar at the bottom of Finder windows
+log "Finder: Show path bar"
 defaults write com.apple.finder ShowPathbar -bool true
 
-# Show status bar in Finder
+log "Finder: Show status bar"
 defaults write com.apple.finder ShowStatusBar -bool true
 
-# Use list view as default in all Finder windows
+log "Finder: Default to list view"
 defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
 
 # ── Keyboard ─────────────────────────────────────────────────────────────────
-# Disable press-and-hold for keys in favor of key repeat
+log "Keyboard: Disable press-and-hold (enable key repeat)"
 defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
 
-# Fast key repeat rate
+log "Keyboard: Set fast key repeat rate (KeyRepeat=2)"
 defaults write NSGlobalDomain KeyRepeat -int 2
 
-# Short delay until key repeat
+log "Keyboard: Set short initial key repeat delay (InitialKeyRepeat=15)"
 defaults write NSGlobalDomain InitialKeyRepeat -int 15
 
 # ── Dock ─────────────────────────────────────────────────────────────────────
-# Minimize windows using scale effect
+log "Dock: Set minimize effect to scale"
 defaults write com.apple.dock mineffect -string "scale"
 
 # ── Restart affected services ────────────────────────────────────────────────
+log "Restarting Finder and Dock to apply changes..."
 for app in Finder Dock; do
   killall "$app" 2>/dev/null || true
 done

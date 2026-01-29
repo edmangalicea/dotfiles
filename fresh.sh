@@ -51,12 +51,21 @@ trap print_summary EXIT
 sudo_keepalive
 
 # ── Run modules ──────────────────────────────────────────────────────────────
-log "Starting dotfiles setup..."
 
-for module in "$MODULES_DIR"/[0-9][0-9]-*.sh(N); do
+# Count modules for progress display
+typeset -a _all_modules
+_all_modules=("$MODULES_DIR"/[0-9][0-9]-*.sh(N))
+export MODULE_TOTAL=${#_all_modules[@]}
+export MODULE_CURRENT=0
+
+log "Starting dotfiles setup... ($MODULE_TOTAL modules)"
+
+for module in "${_all_modules[@]}"; do
   module_name="${module:t:r}"   # e.g. "01-xcode-cli"
+  (( MODULE_CURRENT++ ))
+  export MODULE_CURRENT
 
-  log "Running module: $module_name"
+  log "[$MODULE_CURRENT/$MODULE_TOTAL] Running module: $module_name"
 
   # Track skip messages to detect "already done" modules.
   # We capture the return code and check for skip/fail.

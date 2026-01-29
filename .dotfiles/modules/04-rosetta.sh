@@ -15,8 +15,7 @@ if pgrep -q oahd; then
   return 0
 fi
 
-log "Installing Rosetta 2..."
-sudo softwareupdate --install-rosetta --agree-to-license 2>&1 | tee -a "$DOTFILES_LOG" || {
+spin "Installing Rosetta 2..." sudo softwareupdate --install-rosetta --agree-to-license || {
   warn "Rosetta 2 installation returned non-zero exit code (may already be installed)"
 }
 

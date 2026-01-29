@@ -15,7 +15,25 @@ fail() { printf '[%s]  \033[1;31mFAIL\033[0m  %s\n' "$(_ts)" "$*" | tee -a "$DOT
 skip() { printf '[%s]  \033[1;36mSKIP\033[0m  %s\n' "$(_ts)" "$*" | tee -a "$DOTFILES_LOG"; }
 die()  { fail "$*"; exit 1; }
 
-step() { printf '\n\033[1;36m── %s ──\033[0m\n' "$*" | tee -a "$DOTFILES_LOG"; }
+step() {
+  if [[ -n "${MODULE_CURRENT:-}" ]] && [[ -n "${MODULE_TOTAL:-}" ]]; then
+    printf '\n\033[1;36m── [%s/%s] %s ──\033[0m\n' "$MODULE_CURRENT" "$MODULE_TOTAL" "$*" | tee -a "$DOTFILES_LOG"
+  else
+    printf '\n\033[1;36m── %s ──\033[0m\n' "$*" | tee -a "$DOTFILES_LOG"
+  fi
+}
+
+# ── Verbose runner ──────────────────────────────────────────────────────────
+
+# Run a command with full output visible to the user.
+# Usage: spin "description" command [args...]
+# Returns the command's exit code.
+spin() {
+  local desc="$1"; shift
+  log "$desc"
+  "$@" 2>&1 | tee -a "$DOTFILES_LOG"
+  return ${pipestatus[1]}
+}
 
 # ── Idempotent Helpers ───────────────────────────────────────────────────────
 
@@ -40,11 +58,14 @@ config() {
 
 # Start a background loop that refreshes sudo credentials every 50 seconds.
 # Safe to call multiple times — only spawns one loop.
+# Set DOTFILES_SUDO_CACHED=1 in a parent process to skip the interactive prompt.
 sudo_keepalive() {
-  # If sudo is already cached, just refresh; otherwise prompt once.
-  if ! sudo -n true 2>/dev/null; then
-    log "Requesting sudo credentials..."
-    sudo -v || die "sudo authentication failed"
+  # If a parent (e.g. install.sh) already cached sudo, skip the prompt.
+  if [[ "${DOTFILES_SUDO_CACHED:-0}" != "1" ]]; then
+    if ! sudo -n true 2>/dev/null; then
+      log "Requesting sudo credentials..."
+      sudo -v || die "sudo authentication failed"
+    fi
   fi
 
   # Only start the keep-alive loop if one isn't already running.

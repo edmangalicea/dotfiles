@@ -19,7 +19,7 @@ PROD=$(softwareupdate -l 2>&1 | grep -B 1 -E 'Command Line Tools' | \
 
 if [[ -n "$PROD" ]]; then
   log "Found update: $PROD"
-  sudo softwareupdate -i "$PROD" --verbose 2>&1 | tee -a "$DOTFILES_LOG"
+  spin "Installing $PROD..." sudo softwareupdate -i "$PROD" --verbose
   rm -f /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
 else
   rm -f /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress

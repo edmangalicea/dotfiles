@@ -188,7 +188,7 @@ fi
 if [[ -f "$HOME/fresh.sh" ]]; then
   log "Running fresh.sh modules..."
   chmod +x "$HOME/fresh.sh"
-  DOTFILES_SKIP_CLAUDE_LAUNCH=1 "$HOME/fresh.sh"
+  DOTFILES_SKIP_CLAUDE_LAUNCH=1 DOTFILES_SUDO_CACHED=1 "$HOME/fresh.sh"
   FRESH_RC=$?
 else
   die "fresh.sh not found"

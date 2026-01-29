@@ -23,6 +23,5 @@ fi
 # Ensure .zprofile has the shellenv line (idempotent)
 ensure_line "$HOME/.zprofile" 'eval "$(/opt/homebrew/bin/brew shellenv)"'
 
-log "Updating Homebrew..."
-brew update 2>&1 | tee -a "$DOTFILES_LOG"
+spin "Updating Homebrew..." brew update --verbose
 ok "Homebrew up to date"

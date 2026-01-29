@@ -36,12 +36,13 @@ dockutil --remove all --no-restart
 # ── Add apps (left side) ────────────────────────────────────────────────────
 for app in "${dock_apps[@]}"; do
   if [[ -d "$app" ]]; then
+    log "Dock: Adding ${app:t:r}"
     dockutil --add "$app" --no-restart
   fi
 done
 
 # ── Add Downloads folder (right side) ───────────────────────────────────────
-log "Adding Downloads folder..."
+log "Dock: Adding Downloads folder"
 dockutil --add "${HOME}/Downloads" --view fan --sort dateadded
 
 ok "Dock layout configured (${#dock_apps[@]} apps, 1 folder, $missing missing)"

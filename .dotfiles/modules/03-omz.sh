@@ -26,9 +26,7 @@ P10K_DIR="${ZSH_CUSTOM}/themes/powerlevel10k"
 if [[ -d "$P10K_DIR" ]]; then
   skip "Powerlevel10k already installed"
 else
-  log "Cloning Powerlevel10k..."
-  git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$P10K_DIR" \
-    2>&1 | tee -a "$DOTFILES_LOG"
+  spin "Cloning Powerlevel10k..." git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$P10K_DIR"
   ok "Powerlevel10k installed"
 fi
 
@@ -37,9 +35,7 @@ AS_DIR="${ZSH_CUSTOM}/plugins/zsh-autosuggestions"
 if [[ -d "$AS_DIR" ]]; then
   skip "zsh-autosuggestions already installed"
 else
-  log "Cloning zsh-autosuggestions..."
-  git clone https://github.com/zsh-users/zsh-autosuggestions.git "$AS_DIR" \
-    2>&1 | tee -a "$DOTFILES_LOG"
+  spin "Cloning zsh-autosuggestions..." git clone https://github.com/zsh-users/zsh-autosuggestions.git "$AS_DIR"
   ok "zsh-autosuggestions installed"
 fi
 
@@ -48,8 +44,6 @@ SH_DIR="${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting"
 if [[ -d "$SH_DIR" ]]; then
   skip "zsh-syntax-highlighting already installed"
 else
-  log "Cloning zsh-syntax-highlighting..."
-  git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$SH_DIR" \
-    2>&1 | tee -a "$DOTFILES_LOG"
+  spin "Cloning zsh-syntax-highlighting..." git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$SH_DIR"
   ok "zsh-syntax-highlighting installed"
 fi

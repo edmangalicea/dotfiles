@@ -7,8 +7,7 @@ step "Runtime Tools"
 if command -v bun &>/dev/null; then
   skip "bun already installed ($(bun --version))"
 else
-  log "Installing bun..."
-  curl -fsSL https://bun.sh/install | bash 2>&1 | tee -a "$DOTFILES_LOG"
+  spin "Installing bun..." bash -c 'curl -fsSL https://bun.sh/install | bash'
 
   if [[ -f "$HOME/.bun/bin/bun" ]]; then
     ok "bun installed"
