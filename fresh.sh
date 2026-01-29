@@ -88,6 +88,12 @@ log "Dotfiles setup complete."
 # Create marker so the setup hook knows fresh.sh completed
 touch "$HOME/.dotfiles/.fresh-install-done"
 
+# When called from install.sh, skip the Claude launch (install.sh handles it)
+if [[ "${DOTFILES_SKIP_CLAUDE_LAUNCH:-0}" == "1" ]]; then
+  log "fresh.sh modules complete (Claude launch deferred to install.sh)"
+  exit 0
+fi
+
 if command -v claude &>/dev/null; then
   log "Launching Claude Code to continue setup..."
   exec claude --dangerously-skip-permissions

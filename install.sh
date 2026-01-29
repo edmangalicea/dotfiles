@@ -134,19 +134,123 @@ if ! command -v claude &>/dev/null; then
   export PATH="$HOME/.claude/bin:$HOME/.local/bin:/usr/local/bin:$PATH"
 fi
 
-# ── Hand off to Claude Code or fresh.sh ──────────────────────────────────────
+# ── Parallel setup: Claude auth tab + fresh.sh modules ───────────────────────
 
-if command -v claude &>/dev/null; then
-  log "Launching agentic setup via Claude Code..."
-  log "(For non-interactive install, run: ~/fresh.sh)"
-  exec claude --init
-fi
+BOOTSTRAP_DIR="$HOME/.dotfiles/.bootstrap"
+MARKER_SUCCESS="$BOOTSTRAP_DIR/claude-init-done"
+MARKER_FAILURE="$BOOTSTRAP_DIR/claude-init-failed"
+INIT_SCRIPT="$HOME/.dotfiles/lib/claude-init-tab.sh"
 
-# Fallback if Claude Code install failed
-if [[ -f "$HOME/fresh.sh" ]]; then
-  warn "Claude Code not available — using traditional setup..."
-  chmod +x "$HOME/fresh.sh"
-  "$HOME/fresh.sh"
+# Clean stale markers
+mkdir -p "$BOOTSTRAP_DIR"
+rm -f "$MARKER_SUCCESS" "$MARKER_FAILURE"
+
+# ── Open Claude auth in a new Terminal tab ───────────────────────────────────
+
+CLAUDE_TAB_OPENED=0
+
+if command -v claude &>/dev/null && [[ -f "$INIT_SCRIPT" ]]; then
+  log "Opening new Terminal tab for Claude Code setup..."
+
+  # Try AppleScript to open a new tab in the current Terminal window
+  if osascript <<APPLESCRIPT 2>/dev/null
+tell application "Terminal"
+  activate
+  tell application "System Events"
+    keystroke "t" using {command down}
+  end tell
+  delay 0.5
+  do script "exec zsh '${INIT_SCRIPT}'" in front tab of front window
+end tell
+APPLESCRIPT
+  then
+    CLAUDE_TAB_OPENED=1
+    log "Claude setup tab opened successfully"
+  else
+    # Fallback: open a new Terminal window instead
+    warn "Could not open new tab (Accessibility permission may be needed)"
+    log "Trying new Terminal window instead..."
+    if open -a Terminal "$INIT_SCRIPT" 2>/dev/null; then
+      CLAUDE_TAB_OPENED=1
+      log "Claude setup window opened successfully"
+    else
+      warn "Could not open new Terminal window — skipping parallel Claude setup"
+    fi
+  fi
 else
-  die "Neither Claude Code nor fresh.sh available"
+  if ! command -v claude &>/dev/null; then
+    warn "Claude Code not available — skipping Claude setup tab"
+  fi
 fi
+
+# ── Run fresh.sh modules (skip Claude launch at end) ─────────────────────────
+
+if [[ -f "$HOME/fresh.sh" ]]; then
+  log "Running fresh.sh modules..."
+  chmod +x "$HOME/fresh.sh"
+  DOTFILES_SKIP_CLAUDE_LAUNCH=1 "$HOME/fresh.sh"
+  FRESH_RC=$?
+else
+  die "fresh.sh not found"
+fi
+
+# ── Wait for Claude setup to complete (if tab was opened) ────────────────────
+
+if (( CLAUDE_TAB_OPENED )); then
+  TIMEOUT=600  # 10 minutes
+  ELAPSED=0
+  REMINDER_INTERVAL=30
+  NEXT_REMINDER=$REMINDER_INTERVAL
+
+  while (( ELAPSED < TIMEOUT )); do
+    if [[ -f "$MARKER_SUCCESS" ]] || [[ -f "$MARKER_FAILURE" ]]; then
+      break
+    fi
+
+    if (( ELAPSED >= NEXT_REMINDER )); then
+      log "Still waiting for Claude Code setup in the other tab... (${ELAPSED}s elapsed)"
+      NEXT_REMINDER=$((NEXT_REMINDER + REMINDER_INTERVAL))
+    fi
+
+    sleep 2
+    ELAPSED=$((ELAPSED + 2))
+  done
+
+  if (( ELAPSED >= TIMEOUT )); then
+    warn "Timed out waiting for Claude Code setup (${TIMEOUT}s)"
+    warn "You can run 'claude --init' manually later"
+  fi
+fi
+
+# ── Final handoff ────────────────────────────────────────────────────────────
+
+CLAUDE_OK=0
+if [[ -f "$MARKER_SUCCESS" ]]; then
+  CLAUDE_OK=1
+  log "Claude Code setup completed successfully"
+elif [[ -f "$MARKER_FAILURE" ]]; then
+  warn "Claude Code setup failed in the other tab"
+  warn "Run 'claude --init' manually to retry"
+fi
+
+if (( FRESH_RC != 0 )); then
+  warn "fresh.sh reported failures (exit code $FRESH_RC)"
+  warn "Skipping agentic post-install — review errors above"
+  exit $FRESH_RC
+fi
+
+if (( CLAUDE_OK )) && command -v claude &>/dev/null; then
+  log "Launching agentic post-install via Claude Code..."
+  exec claude --dangerously-skip-permissions
+fi
+
+# Fallback: print manual steps
+echo ""
+echo "Post-install manual steps:"
+echo "  1. Run 'claude --init' to set up Claude Code"
+echo "  2. Generate SSH key:  ssh-keygen -t ed25519 -C \"edmangalicea@gmail.com\""
+echo "  3. Add to GitHub:     cat ~/.ssh/id_ed25519.pub | pbcopy"
+echo "  4. Switch to SSH:     config remote set-url origin git@github.com:edmangalicea/dotfiles.git"
+echo "  5. GitHub CLI auth:   gh auth login"
+echo ""
+echo "Restart your terminal to load the new shell configuration."
