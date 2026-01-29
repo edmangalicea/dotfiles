@@ -49,7 +49,21 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')]  INFO  Setup hook: macOS $MACOS_VERSION ($A
 
 # ── Return context to Claude ────────────────────────────────────────────────
 
-cat <<EOF
+MARKER="$HOME/.dotfiles/.fresh-install-done"
+
+if [[ -f "$MARKER" ]]; then
+  # Fresh install just completed — guide post-install steps
+  cat <<EOF
+{
+  "hookSpecificOutput": {
+    "hookEventName": "Setup",
+    "additionalContext": "Fresh dotfiles install completed. macOS $MACOS_VERSION ($ARCH). All modules ran via fresh.sh.\n\nRun the /install command now — it will detect modules are already installed (they are idempotent) and guide the user through the remaining post-install steps:\n1. Generate SSH key (ed25519)\n2. Add public key to GitHub\n3. Switch dotfiles remote to SSH\n4. Authenticate GitHub CLI (gh auth login)\n\nThis is a dotfiles bare git repo (~/.cfg) managing dotfiles in \$HOME."
+  }
+}
+EOF
+else
+  # No marker — fresh install hasn't run yet
+  cat <<EOF
 {
   "hookSpecificOutput": {
     "hookEventName": "Setup",
@@ -57,3 +71,4 @@ cat <<EOF
   }
 }
 EOF
+fi

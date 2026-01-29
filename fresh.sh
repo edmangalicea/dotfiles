@@ -83,6 +83,17 @@ if [[ -d "$HOME/.cfg" ]]; then
 fi
 
 log "Dotfiles setup complete."
+
+# ── Hand off to Claude Code ──────────────────────────────────────────────────
+# Create marker so the setup hook knows fresh.sh completed
+touch "$HOME/.dotfiles/.fresh-install-done"
+
+if command -v claude &>/dev/null; then
+  log "Launching Claude Code to continue setup..."
+  exec claude --dangerously-skip-permissions
+fi
+
+# Fallback: if claude is not installed, print manual post-install steps
 echo ""
 echo "Post-install manual steps:"
 echo "  1. Generate SSH key:  ssh-keygen -t ed25519 -C \"edmangalicea@gmail.com\""
