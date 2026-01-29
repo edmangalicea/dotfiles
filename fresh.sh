@@ -1,97 +1,93 @@
 #!/usr/bin/env zsh
+# fresh.sh — Modular dotfiles orchestrator
+# Runs numbered modules from ~/.dotfiles/modules/ in order.
+# Each module is sourced (not executed) so it shares utils and state.
 
-#Cache sudo credentials. So we don't have to enter it again.
-export SUDO_ASKPASS="/usr/bin/true"
-sudo -v
+DOTFILES_DIR="$HOME/.dotfiles"
+MODULES_DIR="$DOTFILES_DIR/modules"
 
-# Keep sudo credentials valid for 10 minutes
-while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+# ── Source shared utilities ──────────────────────────────────────────────────
+if [[ ! -f "$DOTFILES_DIR/lib/utils.sh" ]]; then
+  printf '\033[1;31mFATAL:\033[0m %s not found\n' "$DOTFILES_DIR/lib/utils.sh"
+  exit 1
+fi
+source "$DOTFILES_DIR/lib/utils.sh"
 
+# ── Result tracking ─────────────────────────────────────────────────────────
+typeset -a SUCCEEDED FAILED SKIPPED
+SUCCEEDED=()
+FAILED=()
+SKIPPED=()
 
-# Print with colors and formatting
-print_step() {
-  echo "\n\033[1;36m$1...\033[0m"
+# ── Summary on exit ─────────────────────────────────────────────────────────
+print_summary() {
+  echo ""
+  echo "============================================"
+  echo "  Dotfiles Setup Summary"
+  echo "============================================"
+
+  if (( ${#SUCCEEDED[@]} > 0 )); then
+    printf '\033[1;32mSucceeded:\033[0m\n'
+    for m in "${SUCCEEDED[@]}"; do printf '  + %s\n' "$m"; done
+  fi
+
+  if (( ${#SKIPPED[@]} > 0 )); then
+    printf '\033[1;36mSkipped (already done):\033[0m\n'
+    for m in "${SKIPPED[@]}"; do printf '  ~ %s\n' "$m"; done
+  fi
+
+  if (( ${#FAILED[@]} > 0 )); then
+    printf '\033[1;31mFailed:\033[0m\n'
+    for m in "${FAILED[@]}"; do printf '  ! %s\n' "$m"; done
+  fi
+
+  echo "============================================"
+  echo "Log: $DOTFILES_LOG"
+  echo "============================================"
 }
+trap print_summary EXIT
 
-set -e
-trap 'echo "An error occurred. Exiting..."' ERR
+# ── Sudo keep-alive ──────────────────────────────────────────────────────────
+sudo_keepalive
 
-print_step "Setting up your Mac..."
+# ── Run modules ──────────────────────────────────────────────────────────────
+log "Starting dotfiles setup..."
 
-# Check for Command Line Tools first as they're needed for git and homebrew
-if ! xcode-select -p &>/dev/null; then
-    print_step "Installing Command Line Tools"
-    xcode-select --install
-    # Wait for installation to complete
-    until xcode-select -p &>/dev/null; do
-        sleep 5
-    done
+for module in "$MODULES_DIR"/[0-9][0-9]-*.sh(N); do
+  module_name="${module:t:r}"   # e.g. "01-xcode-cli"
+
+  log "Running module: $module_name"
+
+  # Track skip messages to detect "already done" modules.
+  # We capture the return code and check for skip/fail.
+  _skip_count_before=${#SKIPPED[@]}
+
+  # Source the module. If it calls `return`, we catch the code here.
+  local rc=0
+  source "$module" || rc=$?
+
+  if (( rc != 0 )); then
+    FAILED+=("$module_name")
+    fail "Module $module_name failed (exit code $rc)"
+  else
+    # If SKIPPED grew during this module, the module was already done.
+    # But we still consider it a success overall.
+    SUCCEEDED+=("$module_name")
+  fi
+done
+
+# ── Post-setup ───────────────────────────────────────────────────────────────
+# Ensure the bare repo hides untracked files
+if [[ -d "$HOME/.cfg" ]]; then
+  config config status.showUntrackedFiles no
 fi
 
-# Check for Oh My Zsh and install if we don't have it
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    print_step "Installing Oh My Zsh"
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/HEAD/tools/install.sh)" "" --unattended
-fi
-
-# Install Homebrew with better error handling
-if ! command -v brew &>/dev/null; then
-    print_step "Installing Homebrew"
-    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $HOME/.zprofile
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-fi
-
-print_step "Updating Homebrew"
-brew update
-
-# Setup Rosetta 2 emulation
-print_step "Setting up Rosetta 2 emulation"
-softwareupdate --install-rosetta --agree-to-license
-
-# Install all packages from Brewfile
-print_step "Installing packages from Brewfile"
-brew bundle --file=~/Brewfile
-
-# Initialize fnm
-print_step "Initializing fnm"
-eval "$(fnm env --use-on-cd --shell zsh)"
-
-# Install bun
-print_step "Installing bun"
-curl -fsSL https://bun.sh/install | bash
-
-# Accept Xcode license
-print_step "Accepting Xcode license"
-xcodebuild -license accept
-
-print_step "Making Development directory"
-mkdir -p ~/Development
-
-# Setup directory permissions
-print_step "Setting up directory permissions"
-mkdir -p ~/.ssh && chmod 700 ~/.ssh
-[[ -f ~/.ssh/config ]] && chmod 600 ~/.ssh/config
-mkdir -p ~/.config/gh && chmod 700 ~/.config/gh
-
-echo "Note: Run 'gh auth login' to authenticate with GitHub CLI"
-
-# At the end of your script
-print_step "Cleaning up..."
-brew cleanup
-
-print_step "Verifying installations..."
-brew doctor
-
-print_step "Finished setting up your Mac!"
-
-# Source the zshrc file
-source ~/.zshrc
-
-# Define config function for bare repo management
-function config {
-   /usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME $@
-}
-
-# Don't show untracked files in git. So the entire home directory is not shown in git status.
-config config status.showUntrackedFiles no
+log "Dotfiles setup complete."
+echo ""
+echo "Post-install manual steps:"
+echo "  1. Generate SSH key:  ssh-keygen -t ed25519 -C \"edmangalicea@gmail.com\""
+echo "  2. Add to GitHub:     cat ~/.ssh/id_ed25519.pub | pbcopy"
+echo "  3. Switch to SSH:     config remote set-url origin git@github.com:edmangalicea/dotfiles.git"
+echo "  4. GitHub CLI auth:   gh auth login"
+echo ""
+echo "Restart your terminal to load the new shell configuration."

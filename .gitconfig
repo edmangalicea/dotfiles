@@ -10,3 +10,10 @@
 	lg = log --oneline --graph --decorate
 [pull]
 	rebase = true
+[core]
+	editor = cursor --wait
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true

@@ -1,4 +1,10 @@
 # ============================================
+# Taps
+# ============================================
+
+tap "homebrew/bundle"
+
+# ============================================
 # CLI Tools
 # ============================================
 
@@ -26,8 +32,17 @@ brew "stunnel"
 brew "tldr"
 # Extremely fast Python package installer and resolver, written in Rust
 brew "uv"
+# Terminal multiplexer
+brew "tmux"
 # Watch files and take action when they change
 brew "watchman"
+
+# ============================================
+# Fonts
+# ============================================
+
+# Nerd Font required by Powerlevel10k
+cask "font-meslo-lg-nerd-font"
 
 # ============================================
 # Applications (Casks)
