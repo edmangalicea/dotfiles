@@ -15,6 +15,8 @@ tap "yakitrak/yakitrak"
 brew "bfg"
 # Dependency manager for Cocoa projects
 brew "cocoapods"
+# Manage macOS Dock items from the command line
+brew "dockutil"
 # Fast and simple Node.js version manager
 brew "fnm"
 # Interact with Google Gemini AI models from the command-line
