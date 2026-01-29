@@ -16,6 +16,32 @@ zsh -c "$(curl -fsSL https://raw.githubusercontent.com/edmangalicea/dotfiles/mai
 
 You'll be prompted for your sudo password once. Everything else runs unattended.
 
+## Agentic Setup (via Claude Code)
+
+The install script automatically installs [Claude Code](https://claude.ai) and launches an interactive agentic setup session:
+
+```bash
+# Automatic — install.sh installs Claude Code and runs:
+claude --init
+```
+
+Claude reads `CLAUDE.md`, runs the `/install` command, and offers two modes:
+
+- **Agentic** — Claude runs each module interactively, asks about preferences (Rosetta, Brewfile contents, macOS defaults, Node version), and handles errors as they come up
+- **Deterministic** — Claude runs `~/fresh.sh` directly with no questions asked
+
+You can also launch the agentic setup manually at any time:
+
+```bash
+claude --init    # from $HOME
+```
+
+For fully non-interactive / headless use, `~/fresh.sh` still works standalone:
+
+```bash
+~/fresh.sh
+```
+
 ## What Happens During Install
 
 1. **Pre-flight** — verifies network connectivity, logs macOS version
@@ -82,29 +108,35 @@ brew bundle cleanup --file=~/Brewfile --force  # remove unlisted entries
 
 ```
 ~/
+├── .claude/
+│   ├── commands/
+│   │   └── install.md             # /install command for agentic setup
+│   └── settings.json              # Setup hook + pre-approved permissions
 ├── .dotfiles/
 │   ├── lib/
-│   │   └── utils.sh              # Shared: logging, idempotent helpers, config()
+│   │   ├── setup-hook.sh          # Claude Code Setup hook (sudo, env, network)
+│   │   └── utils.sh               # Shared: logging, idempotent helpers, config()
 │   └── modules/
-│       ├── 01-xcode-cli.sh       # Xcode CLI Tools
-│       ├── 02-homebrew.sh        # Homebrew install + PATH
-│       ├── 03-omz.sh             # Oh My Zsh + Powerlevel10k + plugins
-│       ├── 04-rosetta.sh         # Rosetta 2
-│       ├── 05-brewfile.sh        # brew bundle
-│       ├── 06-runtime.sh         # bun, fnm
-│       ├── 07-directories.sh     # ~/Development, .ssh perms
-│       └── 08-macos-defaults.sh  # Finder, keyboard, Dock
-├── .config/gh/config.yml          # GitHub CLI config
-├── .ssh/config                    # SSH configuration (1Password agent)
-├── .gitconfig                     # Git identity, aliases, LFS
-├── .gitignore                     # Ignores .cfg bare repo directory
-├── .p10k.zsh                      # Powerlevel10k prompt theme
-├── .zprofile                      # Homebrew shellenv
-├── .zshrc                         # Shell config (plugins, paths, aliases)
-├── Brewfile                       # Homebrew packages, casks, MAS apps
-├── fresh.sh                       # Modular setup orchestrator
-├── install.sh                     # Bootstrap entry point
-└── README.md                      # This file
+│       ├── 01-xcode-cli.sh        # Xcode CLI Tools
+│       ├── 02-homebrew.sh         # Homebrew install + PATH
+│       ├── 03-omz.sh              # Oh My Zsh + Powerlevel10k + plugins
+│       ├── 04-rosetta.sh          # Rosetta 2
+│       ├── 05-brewfile.sh         # brew bundle
+│       ├── 06-runtime.sh          # bun, fnm
+│       ├── 07-directories.sh      # ~/Development, .ssh perms
+│       └── 08-macos-defaults.sh   # Finder, keyboard, Dock
+├── .config/gh/config.yml           # GitHub CLI config
+├── .ssh/config                     # SSH configuration (1Password agent)
+├── .gitconfig                      # Git identity, aliases, LFS
+├── .gitignore                      # Ignores .cfg bare repo directory
+├── .p10k.zsh                       # Powerlevel10k prompt theme
+├── .zprofile                       # Homebrew shellenv
+├── .zshrc                          # Shell config (plugins, paths, aliases)
+├── Brewfile                        # Homebrew packages, casks, MAS apps
+├── CLAUDE.md                       # Claude Code instructions (points to /install)
+├── fresh.sh                        # Modular setup orchestrator
+├── install.sh                      # Bootstrap entry point
+└── README.md                       # This file
 ```
 
 ## Post-Install Manual Steps

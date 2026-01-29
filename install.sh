@@ -20,6 +20,7 @@ REPO_URL="https://github.com/edmangalicea/dotfiles.git"
 _ts() { date '+%Y-%m-%d %H:%M:%S'; }
 log()  { printf '[%s]  INFO  %s\n' "$(_ts)" "$*" | tee -a "$DOTFILES_LOG"; }
 fail() { printf '[%s]  \033[1;31mFAIL\033[0m  %s\n' "$(_ts)" "$*" | tee -a "$DOTFILES_LOG"; }
+warn() { printf '[%s]  \033[1;33mWARN\033[0m  %s\n' "$(_ts)" "$*" | tee -a "$DOTFILES_LOG"; }
 die()  { fail "$*"; exit 1; }
 
 # ── Config alias (bare repo git wrapper) ─────────────────────────────────────
@@ -110,14 +111,27 @@ log "Set status.showUntrackedFiles = no"
 mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
 mkdir -p "$HOME/.config/gh" && chmod 700 "$HOME/.config/gh"
 
-# ── Hand off to fresh.sh ────────────────────────────────────────────────────
+# ── Install Claude Code if needed ─────────────────────────────────────────────
 
+if ! command -v claude &>/dev/null; then
+  log "Installing Claude Code..."
+  curl -fsSL https://claude.ai/install.sh | bash 2>&1 | tee -a "$DOTFILES_LOG"
+  export PATH="$HOME/.claude/bin:$HOME/.local/bin:/usr/local/bin:$PATH"
+fi
+
+# ── Hand off to Claude Code or fresh.sh ──────────────────────────────────────
+
+if command -v claude &>/dev/null; then
+  log "Launching agentic setup via Claude Code..."
+  log "(For non-interactive install, run: ~/fresh.sh)"
+  exec claude --init
+fi
+
+# Fallback if Claude Code install failed
 if [[ -f "$HOME/fresh.sh" ]]; then
-  log "Handing off to fresh.sh..."
+  warn "Claude Code not available — using traditional setup..."
   chmod +x "$HOME/fresh.sh"
   "$HOME/fresh.sh"
 else
-  die "fresh.sh not found after checkout"
+  die "Neither Claude Code nor fresh.sh available"
 fi
-
-log "Installation complete."

@@ -1,0 +1,36 @@
+{
+  "hooks": {
+    "Setup": [
+      {
+        "matcher": "init",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.dotfiles/lib/setup-hook.sh",
+            "timeout": 120
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(sudo -v)",
+      "Bash(sudo softwareupdate *)",
+      "Bash(xcode-select *)",
+      "Bash(brew *)",
+      "Bash(curl *)",
+      "Bash(mkdir *)",
+      "Bash(chmod *)",
+      "Bash(defaults write *)",
+      "Bash(defaults read *)",
+      "Bash(killall *)",
+      "Bash(zsh *)",
+      "Bash(pgrep *)",
+      "Bash(uname *)",
+      "Bash(sw_vers *)",
+      "Bash(fnm *)",
+      "Bash(softwareupdate *)"
+    ]
+  }
+}
