@@ -49,6 +49,21 @@ sudo -v || die "sudo authentication failed"
 SUDO_PID=$!
 trap 'kill $SUDO_PID 2>/dev/null' EXIT
 
+# ── Xcode Command Line Tools ────────────────────────────────────────────────
+
+if ! xcode-select -p &>/dev/null; then
+  log "Installing Xcode Command Line Tools..."
+  xcode-select --install 2>/dev/null
+
+  # Wait for the installation to complete
+  until xcode-select -p &>/dev/null; do
+    sleep 5
+  done
+  log "Xcode Command Line Tools installed"
+else
+  log "Xcode Command Line Tools already installed"
+fi
+
 # ── Idempotent .gitignore ───────────────────────────────────────────────────
 
 touch "$HOME/.gitignore"
