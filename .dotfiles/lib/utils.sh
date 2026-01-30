@@ -60,6 +60,12 @@ config() {
 # Safe to call multiple times — only spawns one loop.
 # Set DOTFILES_SUDO_CACHED=1 in a parent process to skip the interactive prompt.
 sudo_keepalive() {
+  # If the install created a NOPASSWD sudoers entry, skip keepalive
+  if [[ "${DOTFILES_SUDOERS_INSTALLED:-0}" == "1" ]]; then
+    log "NOPASSWD sudoers active — skipping keepalive"
+    return 0
+  fi
+
   # If a parent (e.g. install.sh) already cached sudo, skip the prompt.
   if [[ "${DOTFILES_SUDO_CACHED:-0}" != "1" ]]; then
     if ! sudo -n true 2>/dev/null; then

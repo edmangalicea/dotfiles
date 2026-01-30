@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# claude-init-tab.sh — Runs in a new Terminal tab during install.sh bootstrap
+# claude-init-window.sh — Runs in a new Terminal window during install.sh bootstrap
 # Handles interactive Claude Code authentication while install.sh waits.
 
 BOOTSTRAP_DIR="$HOME/.dotfiles/.bootstrap"
@@ -10,12 +10,13 @@ export PATH="$HOME/.claude/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin
 
 mkdir -p "$BOOTSTRAP_DIR"
 
+# Write our PID so install.sh can signal us
+echo $$ > "$BOOTSTRAP_DIR/auth-script.pid"
+
 # ── Already authenticated? ─────────────────────────────────────────────────
 if [[ -f "$HOME/.claude.json" ]] && grep -q '"oauthAccount"' "$HOME/.claude.json" 2>/dev/null; then
   printf '\n\033[1;32m✓ Claude Code is already authenticated!\033[0m\n'
   touch "$MARKER_SUCCESS"
-  printf 'This tab will close in 5 seconds...\n'
-  sleep 5
   exit 0
 fi
 
@@ -26,7 +27,7 @@ printf '║              Claude Code Interactive Setup                  ║\n'
 printf '╠══════════════════════════════════════════════════════════════╣\n'
 printf '║  1. Complete the Claude auth steps below.                  ║\n'
 printf '║  2. After signing in, type /exit or press Ctrl+C.         ║\n'
-printf '║  The main tab will continue automatically once you auth.   ║\n'
+printf '║  The main window will continue automatically once you auth.║\n'
 printf '╚══════════════════════════════════════════════════════════════╝\n'
 printf '\033[0m\n'
 
@@ -68,6 +69,4 @@ else
   printf 'You can re-run "claude" manually later to authenticate.\n'
 fi
 
-printf 'This tab will close in 5 seconds...\n'
-sleep 5
 exit 0

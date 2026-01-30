@@ -5,10 +5,8 @@
 # ── PATH setup (Homebrew/Claude may not be in default PATH yet) ──────────────
 export PATH="$HOME/.claude/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 
-# ── Refresh sudo and start keepalive ────────────────────────────────────────
-if sudo -v 2>/dev/null; then
-  (while true; do sudo -n true; sleep 50; kill -0 "$$" 2>/dev/null || exit; done) &
-else
+# ── Verify sudo access (NOPASSWD should be active from install.sh) ─────────
+if ! sudo -n true 2>/dev/null; then
   echo "Warning: sudo not available — some modules may fail"
 fi
 

@@ -29,6 +29,27 @@ config() {
   /usr/bin/git --git-dir="$HOME/.cfg/" --work-tree="$HOME" "$@"
 }
 
+# ── Auth window cleanup helper ───────────────────────────────────────────────
+_close_auth_window() {
+  # Kill the auth script's process group (terminates claude + watcher)
+  if [[ -f "$BOOTSTRAP_DIR/auth-script.pid" ]]; then
+    local auth_pid
+    auth_pid=$(cat "$BOOTSTRAP_DIR/auth-script.pid")
+    kill -HUP -- -"$auth_pid" 2>/dev/null
+    sleep 2
+  fi
+
+  # Close the Terminal window (no confirmation since processes are dead)
+  if [[ -f "$BOOTSTRAP_DIR/auth-window-id" ]]; then
+    local win_id
+    win_id=$(cat "$BOOTSTRAP_DIR/auth-window-id")
+    osascript -e "tell application \"Terminal\" to close window id $win_id" 2>/dev/null || true
+  fi
+
+  # Clean up marker files
+  rm -f "$BOOTSTRAP_DIR/auth-script.pid" "$BOOTSTRAP_DIR/auth-window-id" 2>/dev/null
+}
+
 # ── Pre-flight checks ───────────────────────────────────────────────────────
 
 log "Dotfiles install started"
@@ -45,9 +66,48 @@ log "Network OK"
 echo "Enter your sudo password (it will be cached for the rest of the install):"
 sudo -v || die "sudo authentication failed"
 
-(while true; do sudo -n true; sleep 50; kill -0 "$$" 2>/dev/null || exit; done) &
-SUDO_PID=$!
-trap 'kill $SUDO_PID 2>/dev/null' EXIT
+# ── Passwordless sudo for the install duration ────────────────────────────
+SUDO_USER=$(whoami)
+SUDOERS_FILE="/etc/sudoers.d/dotfiles-install"
+SUDOERS_LINE="$SUDO_USER ALL=(ALL) NOPASSWD: ALL"
+CLEANUP_MARKER="$HOME/.dotfiles/.bootstrap/install-cleanup"
+
+mkdir -p "$HOME/.dotfiles/.bootstrap"
+rm -f "$CLEANUP_MARKER"
+
+SUDOERS_TMP=$(mktemp)
+echo "$SUDOERS_LINE" > "$SUDOERS_TMP"
+if sudo visudo -c -f "$SUDOERS_TMP" &>/dev/null; then
+  sudo cp "$SUDOERS_TMP" "$SUDOERS_FILE"
+  sudo chmod 0440 "$SUDOERS_FILE"
+  export DOTFILES_SUDOERS_INSTALLED=1
+  log "Temporary NOPASSWD sudoers entry created"
+else
+  warn "Failed to validate sudoers entry — falling back to keepalive only"
+fi
+rm -f "$SUDOERS_TMP"
+
+# Self-cleaning daemon: removes sudoers entry on completion or after 2 hours
+(
+  max_wait=7200; elapsed=0
+  while (( elapsed < max_wait )); do
+    [[ -f "$CLEANUP_MARKER" ]] && break
+    sleep 10; elapsed=$((elapsed + 10))
+  done
+  sudo rm -f "$SUDOERS_FILE" 2>/dev/null
+  rm -f "$CLEANUP_MARKER" 2>/dev/null
+) &>/dev/null &
+disown
+
+# Keepalive fallback (detached, self-terminates after 2 hours)
+(
+  end=$(($(date +%s) + 7200))
+  while (( $(date +%s) < end )); do
+    sudo -n true 2>/dev/null
+    sleep 50
+  done
+) &>/dev/null &
+disown
 
 # ── Xcode Command Line Tools ────────────────────────────────────────────────
 
@@ -134,59 +194,49 @@ if ! command -v claude &>/dev/null; then
   export PATH="$HOME/.claude/bin:$HOME/.local/bin:/usr/local/bin:$PATH"
 fi
 
-# ── Claude auth in a separate tab ─────────────────────────────────────────────
+# ── Claude auth in a separate window ─────────────────────────────────────────
 
 BOOTSTRAP_DIR="$HOME/.dotfiles/.bootstrap"
 MARKER_SUCCESS="$BOOTSTRAP_DIR/claude-init-done"
 MARKER_FAILURE="$BOOTSTRAP_DIR/claude-init-failed"
-INIT_SCRIPT="$HOME/.dotfiles/lib/claude-init-tab.sh"
 
 # Clean stale markers
 mkdir -p "$BOOTSTRAP_DIR"
 rm -f "$MARKER_SUCCESS" "$MARKER_FAILURE"
 
-# ── Open Claude auth in a new Terminal tab ───────────────────────────────────
+# ── Open Claude auth in a new Terminal window ───────────────────────────────
 
-CLAUDE_TAB_OPENED=0
+CLAUDE_WINDOW_OPENED=0
+INIT_SCRIPT="$HOME/.dotfiles/lib/claude-init-window.sh"
 
 if command -v claude &>/dev/null && [[ -f "$INIT_SCRIPT" ]]; then
   chmod +x "$INIT_SCRIPT" 2>/dev/null
-  log "Opening new Terminal tab for Claude Code setup..."
+  log "Opening new Terminal window for Claude Code setup..."
 
-  # Try AppleScript to open a new tab in the current Terminal window
-  if osascript <<APPLESCRIPT 2>/dev/null
+  AUTH_WINDOW_ID=$(osascript <<APPLESCRIPT 2>/dev/null
 tell application "Terminal"
-  activate
-  tell application "System Events"
-    keystroke "t" using {command down}
-  end tell
-  delay 0.5
-  do script "exec zsh '${INIT_SCRIPT}'" in front tab of front window
+  do script "exec zsh '${INIT_SCRIPT}'"
+  return id of front window
 end tell
 APPLESCRIPT
-  then
-    CLAUDE_TAB_OPENED=1
-    log "Claude setup tab opened successfully"
+  )
+
+  if [[ -n "$AUTH_WINDOW_ID" ]]; then
+    CLAUDE_WINDOW_OPENED=1
+    echo "$AUTH_WINDOW_ID" > "$BOOTSTRAP_DIR/auth-window-id"
+    log "Claude setup window opened (window ID: $AUTH_WINDOW_ID)"
   else
-    # Fallback: open a new Terminal window instead
-    warn "Could not open new tab (Accessibility permission may be needed)"
-    log "Trying new Terminal window instead..."
-    if open -a Terminal "$INIT_SCRIPT" 2>/dev/null; then
-      CLAUDE_TAB_OPENED=1
-      log "Claude setup window opened successfully"
-    else
-      warn "Could not open new Terminal window — skipping parallel Claude setup"
-    fi
+    warn "Could not open Terminal window — skipping parallel Claude setup"
   fi
 else
   if ! command -v claude &>/dev/null; then
-    warn "Claude Code not available — skipping Claude setup tab"
+    warn "Claude Code not available — skipping Claude setup window"
   fi
 fi
 
-# ── Wait for Claude setup to complete (if tab was opened) ────────────────────
+# ── Wait for Claude setup to complete (if window was opened) ─────────────────
 
-if (( CLAUDE_TAB_OPENED )); then
+if (( CLAUDE_WINDOW_OPENED )); then
   TIMEOUT=600  # 10 minutes
   ELAPSED=0
   REMINDER_INTERVAL=30
@@ -197,7 +247,7 @@ if (( CLAUDE_TAB_OPENED )); then
       break
     fi
 
-    # Fallback: detect auth even if tab script failed to create marker
+    # Fallback: detect auth even if window script failed to create marker
     if [[ -f "$HOME/.claude.json" ]] && grep -q '"oauthAccount"' "$HOME/.claude.json" 2>/dev/null; then
       touch "$MARKER_SUCCESS"
       log "Auth detected via credentials file (fallback)"
@@ -205,7 +255,7 @@ if (( CLAUDE_TAB_OPENED )); then
     fi
 
     if (( ELAPSED >= NEXT_REMINDER )); then
-      log "Still waiting for Claude Code setup in the other tab... (${ELAPSED}s elapsed)"
+      log "Still waiting for Claude Code setup in the other window... (${ELAPSED}s elapsed)"
       NEXT_REMINDER=$((NEXT_REMINDER + REMINDER_INTERVAL))
     fi
 
@@ -213,9 +263,15 @@ if (( CLAUDE_TAB_OPENED )); then
     ELAPSED=$((ELAPSED + 2))
   done
 
+  if [[ -f "$MARKER_SUCCESS" ]]; then
+    log "Auth detected — closing auth window..."
+    _close_auth_window
+  fi
+
   if (( ELAPSED >= TIMEOUT )); then
     warn "Timed out waiting for Claude Code setup (${TIMEOUT}s)"
     warn "You can run 'claude --init' manually later"
+    _close_auth_window
   fi
 fi
 
@@ -226,7 +282,7 @@ if [[ -f "$MARKER_SUCCESS" ]]; then
   CLAUDE_OK=1
   log "Claude Code setup completed successfully"
 elif [[ -f "$MARKER_FAILURE" ]]; then
-  warn "Claude Code setup failed in the other tab"
+  warn "Claude Code setup failed in the other window"
   warn "Run 'claude --init' manually to retry"
 fi
 

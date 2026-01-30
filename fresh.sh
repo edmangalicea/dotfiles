@@ -91,6 +91,9 @@ if [[ -d "$HOME/.cfg" ]]; then
   config config status.showUntrackedFiles no
 fi
 
+# Signal sudoers cleanup daemon
+touch "$HOME/.dotfiles/.bootstrap/install-cleanup"
+
 log "Dotfiles setup complete."
 
 # ── Hand off to Claude Code ──────────────────────────────────────────────────

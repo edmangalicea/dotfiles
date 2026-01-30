@@ -20,14 +20,16 @@ fi
 
 # ── Sudo caching ────────────────────────────────────────────────────────────
 
-echo "Caching sudo credentials for dotfiles setup..."
-sudo -v || {
-  echo '{"error": "sudo authentication failed"}' >&2
-  exit 1
-}
-
-# Keep sudo alive in background
-(while true; do sudo -n true; sleep 50; kill -0 "$$" 2>/dev/null || exit; done) &
+if sudo -n true 2>/dev/null; then
+  echo "Sudo access confirmed (NOPASSWD active)"
+else
+  echo "Caching sudo credentials for dotfiles setup..."
+  sudo -v || {
+    echo '{"error": "sudo authentication failed"}' >&2
+    exit 1
+  }
+  (while true; do sudo -n true; sleep 50; kill -0 "$$" 2>/dev/null || exit; done) &
+fi
 
 # ── Environment variables via CLAUDE_ENV_FILE ────────────────────────────────
 
