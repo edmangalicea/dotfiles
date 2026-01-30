@@ -134,7 +134,7 @@ if ! command -v claude &>/dev/null; then
   export PATH="$HOME/.claude/bin:$HOME/.local/bin:/usr/local/bin:$PATH"
 fi
 
-# ── Parallel setup: Claude auth tab + fresh.sh modules ───────────────────────
+# ── Claude auth in a separate tab ─────────────────────────────────────────────
 
 BOOTSTRAP_DIR="$HOME/.dotfiles/.bootstrap"
 MARKER_SUCCESS="$BOOTSTRAP_DIR/claude-init-done"
@@ -183,17 +183,6 @@ else
   fi
 fi
 
-# ── Run fresh.sh modules (skip Claude launch at end) ─────────────────────────
-
-if [[ -f "$HOME/fresh.sh" ]]; then
-  log "Running fresh.sh modules..."
-  chmod +x "$HOME/fresh.sh"
-  DOTFILES_SKIP_CLAUDE_LAUNCH=1 DOTFILES_SUDO_CACHED=1 "$HOME/fresh.sh"
-  FRESH_RC=$?
-else
-  die "fresh.sh not found"
-fi
-
 # ── Wait for Claude setup to complete (if tab was opened) ────────────────────
 
 if (( CLAUDE_TAB_OPENED )); then
@@ -233,18 +222,27 @@ elif [[ -f "$MARKER_FAILURE" ]]; then
   warn "Run 'claude --init' manually to retry"
 fi
 
-if (( FRESH_RC != 0 )); then
-  warn "fresh.sh reported failures (exit code $FRESH_RC)"
-  warn "Skipping agentic post-install — review errors above"
-  exit $FRESH_RC
-fi
-
 if (( CLAUDE_OK )) && command -v claude &>/dev/null; then
-  log "Launching agentic post-install via Claude Code..."
-  exec claude --dangerously-skip-permissions
+  echo ""
+  echo "╔══════════════════════════════════════════════════════════════╗"
+  echo "║  Prerequisites complete. Claude Code will take over and     ║"
+  echo "║  install your dotfiles modules via the /install command.    ║"
+  echo "╚══════════════════════════════════════════════════════════════╝"
+  echo ""
+  printf "Press Enter to hand off to Claude Code..."
+  read -r
+  exec zsh "$HOME/.dotfiles/lib/claude-bootstrap.sh"
 fi
 
-# Fallback: print manual steps
+# Fallback: Claude auth failed or unavailable — run fresh.sh directly
+log "Running fresh.sh modules (fallback — no Claude orchestration)..."
+if [[ -f "$HOME/fresh.sh" ]]; then
+  chmod +x "$HOME/fresh.sh"
+  DOTFILES_SKIP_CLAUDE_LAUNCH=1 DOTFILES_SUDO_CACHED=1 "$HOME/fresh.sh"
+else
+  die "fresh.sh not found"
+fi
+
 echo ""
 echo "Post-install manual steps:"
 echo "  1. Run 'claude --init' to set up Claude Code"
