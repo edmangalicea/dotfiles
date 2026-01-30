@@ -150,6 +150,7 @@ rm -f "$MARKER_SUCCESS" "$MARKER_FAILURE"
 CLAUDE_TAB_OPENED=0
 
 if command -v claude &>/dev/null && [[ -f "$INIT_SCRIPT" ]]; then
+  chmod +x "$INIT_SCRIPT" 2>/dev/null
   log "Opening new Terminal tab for Claude Code setup..."
 
   # Try AppleScript to open a new tab in the current Terminal window
@@ -193,6 +194,13 @@ if (( CLAUDE_TAB_OPENED )); then
 
   while (( ELAPSED < TIMEOUT )); do
     if [[ -f "$MARKER_SUCCESS" ]] || [[ -f "$MARKER_FAILURE" ]]; then
+      break
+    fi
+
+    # Fallback: detect auth even if tab script failed to create marker
+    if [[ -f "$HOME/.claude.json" ]] && grep -q '"oauthAccount"' "$HOME/.claude.json" 2>/dev/null; then
+      touch "$MARKER_SUCCESS"
+      log "Auth detected via credentials file (fallback)"
       break
     fi
 
