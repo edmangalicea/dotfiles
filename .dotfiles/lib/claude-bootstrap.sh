@@ -5,6 +5,11 @@
 # ── PATH setup (Homebrew/Claude may not be in default PATH yet) ──────────────
 export PATH="$HOME/.claude/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 
+# ── Propagate install mode ─────────────────────────────────────────────
+if [[ -f "$HOME/.dotfiles/.install-mode" ]]; then
+  export DOTFILES_FORCE_INSTALL="$(< "$HOME/.dotfiles/.install-mode")"
+fi
+
 # ── Logging ──────────────────────────────────────────────────────────────────
 _ts() { date '+%Y-%m-%d %H:%M:%S'; }
 log()  { printf '[%s]  INFO  %s\n' "$(_ts)" "$*"; }

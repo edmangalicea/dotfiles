@@ -6,6 +6,16 @@ allowed-tools: Bash, Read, Grep, Glob, AskUserQuestion
 
 # Dotfiles Install Command
 
+## Step 0: Detect Install Mode
+
+Read `~/.dotfiles/.install-mode`. If it contains `1`, the user chose **Force** mode. If `0` or absent, **Incremental** mode.
+
+When running each module, prefix with the env var:
+
+    DOTFILES_FORCE_INSTALL=$(cat ~/.dotfiles/.install-mode 2>/dev/null || echo 0) zsh -c 'source ~/.dotfiles/lib/utils.sh && source ~/.dotfiles/modules/NN-name.sh'
+
+Mention the active mode in the summary.
+
 You are orchestrating a macOS dotfiles setup. The modules live in `~/.dotfiles/modules/` and are numbered 01-08. Each module is a zsh script sourced with shared utilities from `~/.dotfiles/lib/utils.sh`.
 
 ## Step 1: Ask the user which install mode they want

@@ -4,7 +4,7 @@
 step "Runtime Tools"
 
 # ── Bun ──────────────────────────────────────────────────────────────────────
-if command -v bun &>/dev/null; then
+if command -v bun &>/dev/null && ! is_force_install; then
   skip "bun already installed ($(bun --version))"
 else
   spin "Installing bun..." bash -c 'curl -fsSL https://bun.sh/install | bash'

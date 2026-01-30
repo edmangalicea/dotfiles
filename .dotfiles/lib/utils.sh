@@ -88,3 +88,23 @@ _sudo_cleanup() {
     unset _SUDO_KEEPALIVE_PID
   fi
 }
+
+# ── Install Mode Resolution ─────────────────────────────────────────────
+
+_resolve_install_mode() {
+  local mode_file="$HOME/.dotfiles/.install-mode"
+  if [[ -n "${DOTFILES_FORCE_INSTALL+x}" ]]; then
+    return 0
+  fi
+  if [[ -f "$mode_file" ]]; then
+    DOTFILES_FORCE_INSTALL="$(< "$mode_file")"
+    export DOTFILES_FORCE_INSTALL
+    return 0
+  fi
+  export DOTFILES_FORCE_INSTALL=0
+}
+_resolve_install_mode
+
+is_force_install() {
+  [[ "${DOTFILES_FORCE_INSTALL:-0}" == "1" ]]
+}

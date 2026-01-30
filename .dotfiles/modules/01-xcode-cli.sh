@@ -4,8 +4,12 @@
 step "Xcode Command Line Tools"
 
 if xcode-select -p &>/dev/null; then
-  skip "Xcode CLI Tools already installed at $(xcode-select -p)"
-  return 0
+  if is_force_install; then
+    log "Force mode: reinstalling Xcode CLI Tools"
+  else
+    skip "Xcode CLI Tools already installed at $(xcode-select -p)"
+    return 0
+  fi
 fi
 
 log "Installing Xcode Command Line Tools..."

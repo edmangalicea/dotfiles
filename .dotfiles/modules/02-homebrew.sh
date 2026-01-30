@@ -3,7 +3,7 @@
 
 step "Homebrew"
 
-if command -v brew &>/dev/null; then
+if command -v brew &>/dev/null && ! is_force_install; then
   skip "Homebrew already installed"
 else
   log "Installing Homebrew..."

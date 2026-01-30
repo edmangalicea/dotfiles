@@ -11,8 +11,12 @@ fi
 
 # Check if Rosetta is already running
 if pgrep -q oahd; then
-  skip "Rosetta 2 already installed and running"
-  return 0
+  if is_force_install; then
+    log "Force mode: re-running Rosetta 2 install"
+  else
+    skip "Rosetta 2 already installed and running"
+    return 0
+  fi
 fi
 
 spin "Installing Rosetta 2..." sudo softwareupdate --install-rosetta --agree-to-license || {

@@ -73,6 +73,46 @@ if ! curl -sfI https://github.com --max-time 10 &>/dev/null; then
 fi
 log "Network OK"
 
+# ── Previous-run detection ───────────────────────────────────────────────
+INSTALL_MODE_FILE="$HOME/.dotfiles/.install-mode"
+FRESH_DONE_MARKER="$HOME/.dotfiles/.fresh-install-done"
+
+if [[ -f "$FRESH_DONE_MARKER" ]]; then
+  log "Previous installation detected"
+  echo ""
+  echo "╔══════════════════════════════════════════════════════════════╗"
+  echo "║  A previous dotfiles installation was detected.            ║"
+  echo "║                                                            ║"
+  echo "║  Choose an install mode:                                   ║"
+  echo "║                                                            ║"
+  echo "║    [F] Force       — Reinstall everything, even software   ║"
+  echo "║                      that is already installed             ║"
+  echo "║                                                            ║"
+  echo "║    [I] Incremental — Only install what's missing           ║"
+  echo "║                      (skip already-installed items)        ║"
+  echo "╚══════════════════════════════════════════════════════════════╝"
+  echo ""
+  printf "Enter choice [F/I]: "
+  read -r install_choice
+  case "$install_choice" in
+    [Ff]*)
+      export DOTFILES_FORCE_INSTALL=1
+      log "Install mode: FORCE (reinstall everything)"
+      ;;
+    *)
+      export DOTFILES_FORCE_INSTALL=0
+      log "Install mode: INCREMENTAL (skip already-installed)"
+      ;;
+  esac
+  mkdir -p "$(dirname "$INSTALL_MODE_FILE")"
+  echo "$DOTFILES_FORCE_INSTALL" > "$INSTALL_MODE_FILE"
+else
+  log "First run detected — proceeding with full install"
+  export DOTFILES_FORCE_INSTALL=1
+  mkdir -p "$HOME/.dotfiles"
+  echo "1" > "$HOME/.dotfiles/.install-mode"
+fi
+
 # ── Sudo keep-alive ─────────────────────────────────────────────────────────
 
 echo "Enter your sudo password (it will be cached for the rest of the install):"

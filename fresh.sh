@@ -13,6 +13,12 @@ if [[ ! -f "$DOTFILES_DIR/lib/utils.sh" ]]; then
 fi
 source "$DOTFILES_DIR/lib/utils.sh"
 
+if is_force_install; then
+  log "Install mode: FORCE (reinstall everything)"
+else
+  log "Install mode: INCREMENTAL (skip already-installed)"
+fi
+
 # ── Result tracking ─────────────────────────────────────────────────────────
 typeset -a SUCCEEDED FAILED SKIPPED
 SUCCEEDED=()
@@ -98,6 +104,7 @@ log "Dotfiles setup complete."
 
 # ── Hand off to Claude Code ──────────────────────────────────────────────────
 # Create marker so the setup hook knows fresh.sh completed
+rm -f "$HOME/.dotfiles/.install-mode"
 touch "$HOME/.dotfiles/.fresh-install-done"
 
 # When called from install.sh, skip the Claude launch (install.sh handles it)
