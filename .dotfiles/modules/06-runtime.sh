@@ -9,7 +9,9 @@ if command -v bun &>/dev/null && ! is_force_install; then
 else
   spin "Installing bun..." bash -c 'curl -fsSL https://bun.sh/install | bash'
 
-  if [[ -f "$HOME/.bun/bin/bun" ]]; then
+  if is_dry_run; then
+    ok "bun would be installed"
+  elif [[ -f "$HOME/.bun/bin/bun" ]]; then
     ok "bun installed"
   else
     fail "bun installation failed"

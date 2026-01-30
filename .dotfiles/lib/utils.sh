@@ -4,7 +4,7 @@
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 
-DOTFILES_LOG="${HOME}/.dotfiles-install.log"
+DOTFILES_LOG="${DOTFILES_LOG:-$HOME/.dotfiles-install.log}"
 
 _ts() { date '+%Y-%m-%d %H:%M:%S'; }
 
@@ -108,3 +108,54 @@ _resolve_install_mode
 is_force_install() {
   [[ "${DOTFILES_FORCE_INSTALL:-0}" == "1" ]]
 }
+
+# ── Dry-Run Mode ───────────────────────────────────────────────────────────
+
+is_dry_run() {
+  [[ "${DOTFILES_DRY_RUN:-0}" == "1" ]]
+}
+
+if is_dry_run; then
+  DOTFILES_LOG="/dev/null"
+
+  spin() {
+    local desc="$1"; shift
+    log "$desc"
+    log "[DRY RUN] Would execute: $*"
+    return 0
+  }
+
+  sudo_keepalive() { log "[DRY RUN] Would start sudo keepalive"; return 0; }
+
+  ensure_line() { log "[DRY RUN] Would ensure line in $1: $2"; return 0; }
+
+  config() { log "[DRY RUN] Would run: git (bare repo) $*"; return 0; }
+
+  sudo()    { log "[DRY RUN] Would run: sudo $*"; return 0; }
+  rm()      { log "[DRY RUN] Would run: rm $*"; return 0; }
+  touch()   { log "[DRY RUN] Would run: touch $*"; return 0; }
+  mkdir()   { log "[DRY RUN] Would run: mkdir $*"; return 0; }
+  chmod()   { log "[DRY RUN] Would run: chmod $*"; return 0; }
+  defaults(){ log "[DRY RUN] Would run: defaults $*"; return 0; }
+  killall() { log "[DRY RUN] Would run: killall $*"; return 0; }
+  dockutil(){ log "[DRY RUN] Would run: dockutil $*"; return 0; }
+
+  softwareupdate() {
+    case "$1" in
+      -l|--list) command softwareupdate "$@" ;;
+      *)         log "[DRY RUN] Would run: softwareupdate $*"; return 0 ;;
+    esac
+  }
+
+  xcode-select() {
+    case "$1" in
+      -p|--print-path) command xcode-select "$@" ;;
+      *)               log "[DRY RUN] Would run: xcode-select $*"; return 0 ;;
+    esac
+  }
+
+  curl() {
+    log "[DRY RUN] Would fetch: curl $*"
+    return 0
+  }
+fi

@@ -27,15 +27,21 @@ if [[ -n "$PROD" ]]; then
   rm -f /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
 else
   rm -f /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
-  warn "softwareupdate couldn't find CLI Tools, falling back to xcode-select --install"
-  xcode-select --install
-  log "Waiting for Xcode CLI Tools installation to complete..."
-  until xcode-select -p &>/dev/null; do
-    sleep 5
-  done
+  if is_dry_run; then
+    log "[DRY RUN] Would fall back to xcode-select --install"
+  else
+    warn "softwareupdate couldn't find CLI Tools, falling back to xcode-select --install"
+    xcode-select --install
+    log "Waiting for Xcode CLI Tools installation to complete..."
+    until xcode-select -p &>/dev/null; do
+      sleep 5
+    done
+  fi
 fi
 
-if xcode-select -p &>/dev/null; then
+if is_dry_run; then
+  ok "Xcode CLI Tools would be installed"
+elif xcode-select -p &>/dev/null; then
   ok "Xcode CLI Tools installed"
 else
   fail "Xcode CLI Tools installation may have failed"

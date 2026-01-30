@@ -13,6 +13,12 @@ if [[ ! -f "$DOTFILES_DIR/lib/utils.sh" ]]; then
 fi
 source "$DOTFILES_DIR/lib/utils.sh"
 
+if is_dry_run; then
+  log "============================================"
+  log "  DRY RUN MODE — No changes will be made"
+  log "============================================"
+fi
+
 if is_force_install; then
   log "Install mode: FORCE (reinstall everything)"
 else
@@ -29,7 +35,11 @@ SKIPPED=()
 print_summary() {
   echo ""
   echo "============================================"
-  echo "  Dotfiles Setup Summary"
+  if is_dry_run; then
+    echo "  Dotfiles Setup Summary  [DRY RUN]"
+  else
+    echo "  Dotfiles Setup Summary"
+  fi
   echo "============================================"
 
   if (( ${#SUCCEEDED[@]} > 0 )); then

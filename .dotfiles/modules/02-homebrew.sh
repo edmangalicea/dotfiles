@@ -6,17 +6,23 @@ step "Homebrew"
 if command -v brew &>/dev/null && ! is_force_install; then
   skip "Homebrew already installed"
 else
-  log "Installing Homebrew..."
-  NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" \
-    2>&1 | tee -a "$DOTFILES_LOG"
+  if is_dry_run; then
+    log "[DRY RUN] Would install Homebrew via official installer"
+  else
+    log "Installing Homebrew..."
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" \
+      2>&1 | tee -a "$DOTFILES_LOG"
 
-  if [[ $? -ne 0 ]]; then
-    fail "Homebrew installation failed"
-    return 1
+    if [[ $? -ne 0 ]]; then
+      fail "Homebrew installation failed"
+      return 1
+    fi
   fi
 
   # Ensure brew is on PATH for the rest of this session
-  eval "$(/opt/homebrew/bin/brew shellenv)"
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  fi
   ok "Homebrew installed"
 fi
 

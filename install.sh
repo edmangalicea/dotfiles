@@ -62,6 +62,31 @@ _close_auth_window() {
   rm -f "$BOOTSTRAP_DIR/auth-script.pid" "$BOOTSTRAP_DIR/auth-window-id" 2>/dev/null
 }
 
+# ── Install mode prompt ──────────────────────────────────────────────────
+echo ""
+echo "╔══════════════════════════════════════════════════════════════╗"
+echo "║  Dotfiles Installer                                        ║"
+echo "║                                                            ║"
+echo "║    [I] Install    — Run the full installation              ║"
+echo "║                                                            ║"
+echo "║    [D] Dry Run    — Simulate the install (nothing changes) ║"
+echo "╚══════════════════════════════════════════════════════════════╝"
+echo ""
+printf "Enter choice [I/D]: "
+read -r run_mode
+case "$run_mode" in
+  [Dd]*)
+    export DOTFILES_DRY_RUN=1
+    export DOTFILES_LOG="/dev/null"
+    printf '\n\033[1;33m── DRY RUN MODE — nothing will be modified ──\033[0m\n\n'
+    ;;
+  *)
+    export DOTFILES_DRY_RUN=0
+    ;;
+esac
+
+is_dry_run_mode() { [[ "${DOTFILES_DRY_RUN:-0}" == "1" ]]; }
+
 # ── Pre-flight checks ───────────────────────────────────────────────────────
 
 log "Dotfiles install started"
@@ -111,6 +136,18 @@ else
   export DOTFILES_FORCE_INSTALL=1
   mkdir -p "$HOME/.dotfiles"
   echo "1" > "$HOME/.dotfiles/.install-mode"
+fi
+
+# ── Dry-run early exit ──────────────────────────────────────────────────
+if is_dry_run_mode; then
+  log "DRY RUN: Skipping prerequisites (sudo, git clone, checkout, Claude auth)"
+  log "DRY RUN: Jumping directly to module execution via fresh.sh"
+  if [[ -f "$HOME/fresh.sh" ]]; then
+    DOTFILES_SKIP_CLAUDE_LAUNCH=1 DOTFILES_DRY_RUN=1 "$HOME/fresh.sh"
+  else
+    die "fresh.sh not found"
+  fi
+  exit 0
 fi
 
 # ── Sudo keep-alive ─────────────────────────────────────────────────────────
