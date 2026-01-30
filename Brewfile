@@ -130,8 +130,6 @@ cask "google-chrome"
 cask "zen"
 
 # Productivity
-# Block websites, games and applications
-cask "cold-turkey-blocker"
 # Screen color temperature controller
 cask "flux-app"
 # Microsoft Office alternative

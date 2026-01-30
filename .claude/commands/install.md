@@ -16,7 +16,7 @@ When running each module, prefix with the env var:
 
 Mention the active mode in the summary.
 
-You are orchestrating a macOS dotfiles setup. The modules live in `~/.dotfiles/modules/` and are numbered 01-08. Each module is a zsh script sourced with shared utilities from `~/.dotfiles/lib/utils.sh`.
+You are orchestrating a macOS dotfiles setup. The modules live in `~/.dotfiles/modules/` and are numbered 01-09. Each module is a zsh script sourced with shared utilities from `~/.dotfiles/lib/utils.sh`.
 
 ## Step 1: Ask the user which install mode they want
 
@@ -70,6 +70,8 @@ Track results for each module: **succeeded**, **skipped** (already done), **fail
    - Keyboard: fast key repeat, short delay
    - Dock: auto-hide, small icons
    Ask "Apply these macOS defaults?" If they decline, mark as **declined**.
+
+9. **09-dock** — Before running, describe the Dock layout it will configure (list the apps from the script). Ask "Apply this Dock layout?" If they decline, mark as **declined**.
 
 ### Error handling
 
