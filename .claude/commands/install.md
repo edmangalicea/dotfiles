@@ -59,7 +59,20 @@ Track results for each module: **succeeded**, **skipped** (already done), **fail
 
 4. **04-rosetta** — Ask the user: "Install Rosetta 2 for x86_64 app compatibility?" If they decline, mark as **declined** and continue.
 
-5. **05-brewfile** — Before running, read `~/Brewfile` and show a summary of what will be installed (formulae, casks, Mac App Store apps). Ask "Proceed with installing these packages?" If they decline, mark as **declined**.
+5. **05-brewfile** — Before running:
+   a. Read `~/Brewfile` and show a categorized summary of what will
+      be installed (taps, CLI tools, casks, fonts, VS Code extensions,
+      Mac App Store apps) with counts per category.
+   b. Ask the user (AskUserQuestion, 3 options):
+      - "Install all packages" — proceed with the full Brewfile.
+      - "Customize selection" — tell the user to run the interactive
+        selector in their own terminal:
+        `~/.dotfiles/lib/brewfile-selector.sh`
+        Then ask them to confirm when done. The selector writes a
+        filtered Brewfile to `~/.dotfiles/.brewfile-filtered`.
+      - "Skip Brewfile entirely" — mark as **declined**.
+   c. Run module 05. It will use the filtered file if present,
+      otherwise the full ~/Brewfile.
 
 6. **06-runtime** — Run without asking. After it completes, ask: "Which Node.js version would you like to install via fnm? (e.g., 22, 20, or skip)" If the user provides a version, run `fnm install <version> && fnm default <version>`. If they say skip, move on.
 
