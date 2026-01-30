@@ -31,22 +31,34 @@ config() {
 
 # ── Auth window cleanup helper ───────────────────────────────────────────────
 _close_auth_window() {
-  # Kill the auth script's process group (terminates claude + watcher)
   if [[ -f "$BOOTSTRAP_DIR/auth-script.pid" ]]; then
     local auth_pid
     auth_pid=$(cat "$BOOTSTRAP_DIR/auth-script.pid")
-    kill -HUP -- -"$auth_pid" 2>/dev/null
-    sleep 2
+
+    kill -INT -- -"$auth_pid" 2>/dev/null        # graceful Ctrl+C
+
+    # Poll for actual process death (up to 10s)
+    local waited=0
+    while (( waited < 10 )); do
+      kill -0 "$auth_pid" 2>/dev/null || break
+      sleep 1
+      waited=$((waited + 1))
+    done
+
+    # Force-kill if still alive
+    if kill -0 "$auth_pid" 2>/dev/null; then
+      warn "Auth process did not exit gracefully — forcing termination"
+      kill -9 -- -"$auth_pid" 2>/dev/null
+      sleep 1
+    fi
   fi
 
-  # Close the Terminal window (no confirmation since processes are dead)
   if [[ -f "$BOOTSTRAP_DIR/auth-window-id" ]]; then
     local win_id
     win_id=$(cat "$BOOTSTRAP_DIR/auth-window-id")
     osascript -e "tell application \"Terminal\" to close window id $win_id" 2>/dev/null || true
   fi
 
-  # Clean up marker files
   rm -f "$BOOTSTRAP_DIR/auth-script.pid" "$BOOTSTRAP_DIR/auth-window-id" 2>/dev/null
 }
 
@@ -291,6 +303,25 @@ if (( CLAUDE_WINDOW_OPENED )); then
   if [[ -f "$MARKER_SUCCESS" ]]; then
     log "Auth detected — closing auth window..."
     _close_auth_window
+
+    # Verify credentials are fully persisted before proceeding
+    local cred_ready=0 cred_wait=0
+    while (( cred_wait < 5 )); do
+      if [[ -f "$HOME/.claude.json" ]] && \
+         grep -q '"oauthAccount"' "$HOME/.claude.json" 2>/dev/null && \
+         grep -q '"hasCompletedOnboarding"' "$HOME/.claude.json" 2>/dev/null; then
+        cred_ready=1
+        break
+      fi
+      sleep 1
+      cred_wait=$((cred_wait + 1))
+    done
+
+    if (( cred_ready )); then
+      log "Credentials verified in ~/.claude.json"
+    else
+      warn "Credentials may be incomplete — Claude Code might require re-authentication"
+    fi
   fi
 
   if (( ELAPSED >= TIMEOUT )); then

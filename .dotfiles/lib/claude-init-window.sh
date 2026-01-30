@@ -13,6 +13,10 @@ mkdir -p "$BOOTSTRAP_DIR"
 # Write our PID so install.sh can signal us
 echo $$ > "$BOOTSTRAP_DIR/auth-script.pid"
 
+# Ignore SIGINT so this script survives the process-group signal;
+# claude (child process) still receives and handles SIGINT independently.
+trap '' INT
+
 # ── Already authenticated? ─────────────────────────────────────────────────
 if [[ -f "$HOME/.claude.json" ]] && grep -q '"oauthAccount"' "$HOME/.claude.json" 2>/dev/null; then
   printf '\n\033[1;32m✓ Claude Code is already authenticated!\033[0m\n'
@@ -26,16 +30,19 @@ printf '╔═══════════════════════
 printf '║              Claude Code Interactive Setup                  ║\n'
 printf '╠══════════════════════════════════════════════════════════════╣\n'
 printf '║  1. Complete the Claude auth steps below.                  ║\n'
-printf '║  2. After signing in, type /exit or press Ctrl+C.         ║\n'
+printf '║  2. After signing in, this window will close automatically. ║\n'
 printf '║  The main window will continue automatically once you auth.║\n'
 printf '╚══════════════════════════════════════════════════════════════╝\n'
 printf '\033[0m\n'
 
-# ── Background watcher: create marker as soon as auth is detected ──────────
+# ── Background watcher: create marker and terminate claude after auth ───────
+SCRIPT_PID=$$
 (
   while true; do
     if [[ -f "$HOME/.claude.json" ]] && grep -q '"oauthAccount"' "$HOME/.claude.json" 2>/dev/null; then
       touch "$MARKER_SUCCESS"
+      sleep 3                                    # let credential writes finish
+      kill -INT -- -"$SCRIPT_PID" 2>/dev/null    # Ctrl+C to process group
       exit 0
     fi
     sleep 2
