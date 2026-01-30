@@ -16,7 +16,7 @@ When running each module, prefix with the env var:
 
 Mention the active mode in the summary.
 
-You are orchestrating a macOS dotfiles setup. The modules live in `~/.dotfiles/modules/` and are numbered 01-09. Each module is a zsh script sourced with shared utilities from `~/.dotfiles/lib/utils.sh`.
+You are orchestrating a macOS dotfiles setup. The modules live in `~/.dotfiles/modules/` and are numbered 01-10. Each module is a zsh script sourced with shared utilities from `~/.dotfiles/lib/utils.sh`.
 
 ## Step 1: Ask the user which install mode they want
 
@@ -86,6 +86,25 @@ Track results for each module: **succeeded**, **skipped** (already done), **fail
 
 9. **09-dock** — Before running, describe the Dock layout it will configure (list the apps from the script). Ask "Apply this Dock layout?" If they decline, mark as **declined**.
 
+10. **10-claude-config** — Before running:
+    a. Check `gh auth status`. If not authenticated, tell the user
+       to run `gh auth login` in their terminal, then confirm when done.
+    b. Check if `~/.claude/settings.json` already exists. If so, tell
+       the user: "You have an existing Claude configuration. The module
+       will back up your entire ~/.claude/ directory before restoring
+       from the backup repo. Your GitHub PAT and any local-only files
+       will be preserved."
+    c. Ask the user (AskUserQuestion, 3 options):
+       - "Set up config + auto-sync" — full setup (clone, restore, daemon).
+       - "Restore config only" — clone + restore, skip daemon.
+       - "Skip Claude config" — mark as **declined**.
+    d. Run module 10. For "Restore config only", prepend
+       `CLAUDE_SKIP_AUTOSYNC=1` to the execution command.
+    e. After completion, check the output for:
+       - Backup location — tell user where their backup is stored
+       - GitHub PAT placeholder warning — remind user to edit settings.json
+       - macos-trash warning — suggest `brew install macos-trash`
+
 ### Error handling
 
 If any module fails (non-zero exit code), show the error output and ask the user:
@@ -126,6 +145,9 @@ Present the post-install steps:
 2. **Add key to GitHub**: `cat ~/.ssh/id_ed25519.pub | pbcopy` then paste at github.com/settings/keys
 3. **Switch dotfiles remote to SSH**: `config remote set-url origin git@github.com:edmangalicea/dotfiles.git`
 4. **Authenticate GitHub CLI**: `gh auth login`
+5. **Set up GitHub PAT for Claude Code**: If restore warned about
+   `<YOUR_GITHUB_PAT_HERE>`, create a token at github.com/settings/tokens
+   and add it to `~/.claude/settings.json`.
 
 Ask the user: "Would you like help with any of these post-install steps?" If yes, walk them through the ones they choose.
 
