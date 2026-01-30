@@ -23,11 +23,19 @@ If the user chose **Agentic**, run modules one at a time. For each module, execu
 zsh -c 'source ~/.dotfiles/lib/utils.sh && source ~/.dotfiles/modules/NN-name.sh'
 ```
 
-Before modules that need sudo (01, 04, 08), refresh credentials:
+Before modules that need sudo (01, 04), verify non-interactive access:
 
 ```bash
-sudo -v
+sudo -n true
 ```
+
+If `sudo -n true` fails, do NOT attempt `sudo -v` (it requires an interactive terminal that Claude Code cannot provide). Instead, tell the user to run this command in their own terminal:
+
+```
+echo "$(whoami) ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/dotfiles-install
+```
+
+Then retry `sudo -n true` to confirm it works before proceeding.
 
 Track results for each module: **succeeded**, **skipped** (already done), **failed**, or **declined** (user chose not to run it).
 

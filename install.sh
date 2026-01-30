@@ -79,9 +79,34 @@ SUDOERS_TMP=$(mktemp)
 echo "$SUDOERS_LINE" > "$SUDOERS_TMP"
 if sudo visudo -c -f "$SUDOERS_TMP" &>/dev/null; then
   sudo cp "$SUDOERS_TMP" "$SUDOERS_FILE"
+  sudo chown root:wheel "$SUDOERS_FILE"
   sudo chmod 0440 "$SUDOERS_FILE"
-  export DOTFILES_SUDOERS_INSTALLED=1
   log "Temporary NOPASSWD sudoers entry created"
+
+  # Verify the entry actually works
+  if sudo -n true 2>/dev/null; then
+    export DOTFILES_SUDOERS_INSTALLED=1
+    log "NOPASSWD sudo verified — Claude Code will have sudo access"
+  else
+    warn "NOPASSWD entry created but sudo -n true still fails"
+    # Diagnostics
+    if ! grep -q '#includedir /etc/sudoers.d' /etc/sudoers 2>/dev/null && \
+       ! grep -q '@includedir /etc/sudoers.d' /etc/sudoers 2>/dev/null; then
+      warn "  /etc/sudoers does not include /etc/sudoers.d — entry will be ignored"
+    fi
+    if [[ ! -f "$SUDOERS_FILE" ]]; then
+      warn "  $SUDOERS_FILE does not exist after copy"
+    else
+      perms=$(stat -f '%A' "$SUDOERS_FILE" 2>/dev/null)
+      owner=$(stat -f '%Su:%Sg' "$SUDOERS_FILE" 2>/dev/null)
+      [[ "$perms" != "440" ]] && warn "  Permissions are $perms (expected 440)"
+      [[ "$owner" != "root:wheel" ]] && warn "  Ownership is $owner (expected root:wheel)"
+      if ! sudo visudo -c -f "$SUDOERS_FILE" &>/dev/null; then
+        warn "  visudo validation of installed file failed"
+      fi
+    fi
+    warn "Claude Code may not be able to run sudo commands"
+  fi
 else
   warn "Failed to validate sudoers entry — falling back to keepalive only"
 fi

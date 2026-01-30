@@ -4,7 +4,7 @@
 #
 # Responsibilities:
 #   1. Check network connectivity
-#   2. Cache sudo credentials
+#   2. Verify non-interactive sudo access (no prompting)
 #   3. Export env vars via CLAUDE_ENV_FILE
 #   4. Log macOS version
 #   5. Return JSON with additionalContext
@@ -18,17 +18,15 @@ if ! curl -sfI https://github.com --max-time 10 &>/dev/null; then
   exit 2
 fi
 
-# ── Sudo caching ────────────────────────────────────────────────────────────
+# ── Sudo check (non-interactive only — hooks cannot prompt) ─────────────────
 
 if sudo -n true 2>/dev/null; then
   echo "Sudo access confirmed (NOPASSWD active)"
 else
-  echo "Caching sudo credentials for dotfiles setup..."
-  sudo -v || {
-    echo '{"error": "sudo authentication failed"}' >&2
-    exit 1
-  }
-  (while true; do sudo -n true; sleep 50; kill -0 "$$" 2>/dev/null || exit; done) &
+  echo "WARNING: Non-interactive sudo not available"
+  echo "Modules that need sudo (01-xcode-cli, 04-rosetta) may fail"
+  echo "To fix, run in your terminal:"
+  echo "  echo \"$(whoami) ALL=(ALL) NOPASSWD: ALL\" | sudo tee /etc/sudoers.d/dotfiles-install"
 fi
 
 # ── Environment variables via CLAUDE_ENV_FILE ────────────────────────────────
@@ -69,7 +67,7 @@ else
 {
   "hookSpecificOutput": {
     "hookEventName": "Setup",
-    "additionalContext": "Setup hook completed. macOS $MACOS_VERSION ($ARCH). Sudo cached. Environment ready.\n\nThis is a dotfiles bare git repo (~/.cfg) managing dotfiles in \$HOME. Run the /install command now to set up the machine."
+    "additionalContext": "Setup hook completed. macOS $MACOS_VERSION ($ARCH). Environment ready.\n\nThis is a dotfiles bare git repo (~/.cfg) managing dotfiles in \$HOME. Run the /install command now to set up the machine.\n\nIMPORTANT: Before running modules that need sudo, check with 'sudo -n true'. If it fails, tell the user to run this in their terminal:\n  echo \"$(whoami) ALL=(ALL) NOPASSWD: ALL\" | sudo tee /etc/sudoers.d/dotfiles-install"
   }
 }
 EOF
