@@ -63,6 +63,8 @@ For fully non-interactive / headless use, `~/fresh.sh` still works standalone:
 | `06-runtime` | Installs bun, initializes fnm |
 | `07-directories` | Creates `~/Development`, sets `~/.ssh` and `~/.config/gh` permissions |
 | `08-macos-defaults` | Configures Finder, keyboard repeat, Dock preferences |
+| `09-dock` | Configures Dock layout via `dockutil` (removes defaults, adds preferred apps in order) |
+| `10-claude-config` | Clones `claude-code-backup` repo, restores Claude Code settings/hooks/commands, optional auto-sync daemon |
 
 Each module is independently re-runnable and idempotent. Guards check if work is already done and skip accordingly.
 
@@ -114,6 +116,9 @@ brew bundle cleanup --file=~/Brewfile --force  # remove unlisted entries
 │   └── settings.json              # Setup hook + pre-approved permissions
 ├── .dotfiles/
 │   ├── lib/
+│   │   ├── brewfile-selector.sh   # Interactive Brewfile package selector TUI
+│   │   ├── claude-bootstrap.sh    # Claude Code bootstrap orchestrator
+│   │   ├── claude-init-window.sh  # Interactive auth window for Claude setup
 │   │   ├── setup-hook.sh          # Claude Code Setup hook (sudo, env, network)
 │   │   └── utils.sh               # Shared: logging, idempotent helpers, config()
 │   └── modules/
@@ -124,7 +129,9 @@ brew bundle cleanup --file=~/Brewfile --force  # remove unlisted entries
 │       ├── 05-brewfile.sh         # brew bundle
 │       ├── 06-runtime.sh          # bun, fnm
 │       ├── 07-directories.sh      # ~/Development, .ssh perms
-│       └── 08-macos-defaults.sh   # Finder, keyboard, Dock
+│       ├── 08-macos-defaults.sh   # Finder, keyboard, Dock
+│       ├── 09-dock.sh             # Dock layout via dockutil
+│       └── 10-claude-config.sh    # Claude Code config restore + sync
 ├── .config/gh/config.yml           # GitHub CLI config
 ├── .ssh/config                     # SSH configuration (1Password agent)
 ├── .gitconfig                      # Git identity, aliases, LFS
@@ -135,7 +142,8 @@ brew bundle cleanup --file=~/Brewfile --force  # remove unlisted entries
 ├── Brewfile                        # Homebrew packages, casks, MAS apps
 ├── fresh.sh                        # Modular setup orchestrator
 ├── install.sh                      # Bootstrap entry point
-└── README.md                       # This file
+├── README.md                       # This file
+└── claude-code-backup/             # Claude config backup repo (cloned by module 10)
 ```
 
 ## Post-Install Manual Steps
@@ -161,6 +169,11 @@ brew bundle cleanup --file=~/Brewfile --force  # remove unlisted entries
    gh auth login
    ```
 
+5. **Set up GitHub PAT for Claude Code**
+   If module 10 warned about a placeholder, create a token at
+   [github.com/settings/tokens](https://github.com/settings/tokens)
+   and add it to `~/.claude/settings.json`.
+
 ## Troubleshooting
 
 ### Log file
@@ -184,3 +197,4 @@ If the install backed up conflicting files, they're in `~/.dotfiles-backup/<time
 | `config checkout` fails | Existing files conflict — check `~/.dotfiles-backup/` for your originals |
 | Powerlevel10k garbled | Install a Nerd Font: `brew install --cask font-meslo-lg-nerd-font`, then set it in your terminal |
 | Module failed | Re-run just that module: `source ~/.dotfiles/lib/utils.sh && source ~/.dotfiles/modules/NN-name.sh` |
+| Claude config restore failed | Check `gh auth status`, ensure gh is authenticated. Re-run: `source ~/.dotfiles/lib/utils.sh && source ~/.dotfiles/modules/10-claude-config.sh` |
