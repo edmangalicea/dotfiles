@@ -3,9 +3,9 @@
 # ============================================
 
 tap "homebrew/bundle"
-tap "antoniorodr/memo"                                   # @personal
-tap "steipete/tap"                                       # @personal
-tap "yakitrak/yakitrak"                                  # @personal
+tap "antoniorodr/memo"                                   # @guest
+tap "steipete/tap"                                       # @guest
+tap "yakitrak/yakitrak"                                  # @guest
 
 # ============================================
 # CLI Tools
@@ -28,7 +28,7 @@ brew "git-lfs"
 # Open source programming language for simple/reliable/efficient software
 brew "go"                                                # @personal @guest
 # CLI email client written in Rust
-brew "himalaya"                                          # @personal
+brew "himalaya"                                          # @guest
 # Lightweight and flexible command-line JSON processor
 brew "jq"
 # Create and manage Apple Silicon-native virtual machines
@@ -63,32 +63,32 @@ brew "watchman"                                          # @personal @guest
 # ============================================
 
 # Fast X CLI for tweeting, replying, and reading
-brew "steipete/tap/bird"                                 # @personal
+brew "steipete/tap/bird"                                 # @guest
 # Grep the GIF
-brew "steipete/tap/gifgrep"                              # @personal
+brew "steipete/tap/gifgrep"                              # @guest
 # Google CLI for Gmail, Calendar, Drive, and Contacts
-brew "steipete/tap/gogcli"                               # @personal
+brew "steipete/tap/gogcli"                               # @guest
 # Google Places API CLI
-brew "steipete/tap/goplaces"                             # @personal
+brew "steipete/tap/goplaces"                             # @guest
 # Send and read iMessage / SMS from the terminal
-brew "steipete/tap/imsg"                                 # @personal
+brew "steipete/tap/imsg"                                 # @guest
 # macOS screenshots and AI vision analysis
-brew "steipete/tap/peekaboo"                             # @personal
+brew "steipete/tap/peekaboo"                             # @guest
 # Fast CLI for Apple Reminders
-brew "steipete/tap/remindctl"                            # @personal
+brew "steipete/tap/remindctl"                            # @guest
 # Link to clean text to summary
-brew "steipete/tap/summarize"                            # @personal
+brew "steipete/tap/summarize"                            # @guest
 # WhatsApp CLI built on whatsmeow
-brew "steipete/tap/wacli"                                # @personal
+brew "steipete/tap/wacli"                                # @guest
 
 # ============================================
 # Third-Party CLI
 # ============================================
 
 # CLI app to manage Apple Notes and Apple Reminders
-brew "memo"                                              # @personal
+brew "memo"                                              # @guest
 # Obsidian CLI
-brew "yakitrak/yakitrak/obsidian-cli"                    # @personal
+brew "yakitrak/yakitrak/obsidian-cli"                    # @guest
 
 # ============================================
 # Fonts
@@ -108,10 +108,8 @@ cask "1password"                                         # @personal @guest
 cask "1password-cli"                                     # @personal @guest
 
 # Development
-# Tools for building Android applications
-cask "android-studio"                                    # @personal @guest
 # Write, edit, and chat about your code with AI
-cask "cursor"                                            # @personal @guest
+cask "cursor"
 # Agentic IDE powered by AI Flow paradigm
 cask "windsurf"                                          # @personal @guest
 
@@ -121,7 +119,7 @@ cask "claude-code"
 # Menu bar for Claude/Codex usage monitoring
 cask "claudebar"                                         # @personal
 # OpenAI's coding agent that runs in your terminal
-cask "codex"                                             # @personal @guest
+cask "codex"
 
 # Browsers
 # Web browser
@@ -141,7 +139,7 @@ cask "raycast"                                           # @personal @guest
 # Move and resize windows using keyboard shortcuts or snap areas
 cask "rectangle"                                         # @personal @guest
 # Speech to text
-cask "superwhisper"                                      # @personal
+cask "superwhisper"                                      # @personal @host
 
 # Communication
 # Voice and text chat software
@@ -149,7 +147,7 @@ cask "discord"                                           # @personal
 # Team communication and collaboration software
 cask "slack"                                             # @personal
 # Messaging app with a focus on speed and security
-cask "telegram"                                          # @personal
+cask "telegram"                                          # @personal @guest
 # Video communication and virtual meeting platform
 cask "zoom"                                              # @personal
 
@@ -166,21 +164,10 @@ cask "vlc"                                               # @personal
 # Utilities
 # Open-source keystroke visualiser
 cask "keycastr"                                          # @personal
-# Virtual machines UI using QEMU
-cask "utm"                                               # @personal
 # Mesh VPN
 cask "tailscale-app"                                     # @personal @guest
 # Rust-based terminal
 cask "warp"                                              # @personal @guest
-
-# ============================================
-# VS Code / Cursor Extensions
-# ============================================
-
-vscode "anthropic.claude-code"                           # @personal @guest
-vscode "openai.chatgpt"                                  # @personal @guest
-vscode "rooveterinaryinc.roo-cline"                      # @personal @guest
-vscode "saoudrizwan.claude-dev"                          # @personal @guest
 
 # ============================================
 # Mac App Store

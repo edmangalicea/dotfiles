@@ -14,7 +14,42 @@ Automated macOS setup using a [bare git repo](https://www.atlassian.com/git/tuto
 zsh -c "$(curl -fsSL https://raw.githubusercontent.com/edmangalicea/dotfiles/main/install.sh)"
 ```
 
-You'll be prompted for your sudo password once. Everything else runs unattended.
+You'll be prompted for your sudo password once. After cloning, the installer prompts for machine type (Personal / VM Host / VM Guest) to tailor the setup to your environment.
+
+## Installation Modes
+
+The installer supports three machine types, selected during install:
+
+| Mode | Description | Modules Run | Brewfile |
+|------|-------------|-------------|----------|
+| **Personal** | Full install on a personal machine | All 10 modules | Full (untagged + `@personal` lines) |
+| **VM Host** | Minimal install to run Lume macOS VMs | 01, 02, 03, 05, 07 | Host-only (untagged + `@host` lines) |
+| **VM Guest** | Full install inside a virtual machine | All 10 modules | Guest-only (untagged + `@guest` lines) |
+
+### Module execution matrix
+
+| Module | Personal | Host | Guest |
+|--------|:--------:|:----:|:-----:|
+| `01-xcode-cli` | yes | yes | yes |
+| `02-homebrew` | yes | yes | yes |
+| `03-omz` | yes | yes | yes |
+| `04-rosetta` | yes | — | yes |
+| `05-brewfile` | yes | yes | yes |
+| `06-runtime` | yes | — | yes |
+| `07-directories` | yes | yes | yes |
+| `08-macos-defaults` | yes | — | yes |
+| `09-dock` | yes | — | yes |
+| `10-claude-config` | yes | — | yes |
+
+### Overriding the mode
+
+Set the `DOTFILES_INSTALL_MODE` environment variable to skip the interactive prompt:
+
+```bash
+DOTFILES_INSTALL_MODE=guest ~/fresh.sh
+```
+
+The selected mode is persisted to `~/.dotfiles/.install-mode` and used by subsequent runs of `fresh.sh`.
 
 ## Agentic Setup (via Claude Code)
 
@@ -25,7 +60,7 @@ The install script automatically installs [Claude Code](https://claude.ai) and l
 claude --init
 ```
 
-Claude receives the `/install` instruction via the Setup hook and offers two modes:
+After machine type selection, Claude receives the `/install` instruction via the Setup hook and offers two modes:
 
 - **Agentic** — Claude runs each module interactively, asks about preferences (Rosetta, Brewfile contents, macOS defaults, Node version), and handles errors as they come up
 - **Deterministic** — Claude runs `~/fresh.sh` directly with no questions asked
@@ -49,7 +84,8 @@ For fully non-interactive / headless use, `~/fresh.sh` still works standalone:
 3. **Bare repo clone** — clones `dotfiles.git` to `~/.cfg` (skips if already present)
 4. **Backup** — any conflicting files are moved to `~/.dotfiles-backup/<timestamp>/` (not deleted)
 5. **Checkout** — dotfiles are checked out into `$HOME`
-6. **Modules** — `fresh.sh` runs each module in `~/.dotfiles/modules/` in order
+6. **Machine type selection** — prompts for Personal / VM Host / VM Guest (or reads `DOTFILES_INSTALL_MODE` env var), saves choice to `~/.dotfiles/.install-mode`
+7. **Modules** — `fresh.sh` runs each module in `~/.dotfiles/modules/` in order (skipping modules not applicable for the selected mode)
 
 ## Modules
 
@@ -59,7 +95,7 @@ For fully non-interactive / headless use, `~/fresh.sh` still works standalone:
 | `02-homebrew` | Installs Homebrew, ensures `~/.zprofile` PATH line, runs `brew update` |
 | `03-omz` | Installs Oh My Zsh (`--unattended --keep-zshrc`), Powerlevel10k, zsh-autosuggestions, zsh-syntax-highlighting |
 | `04-rosetta` | Installs Rosetta 2 on Apple Silicon (skips on Intel or if already running) |
-| `05-brewfile` | Runs `brew bundle` from `~/Brewfile`, then `brew cleanup` |
+| `05-brewfile` | Filters `~/Brewfile` by machine mode (`@mode` tags), runs `brew bundle`, then `brew cleanup` |
 | `06-runtime` | Installs bun, initializes fnm |
 | `07-directories` | Creates `~/Development`, sets `~/.ssh` and `~/.config/gh` permissions |
 | `08-macos-defaults` | Configures Finder, keyboard repeat, Dock preferences |
@@ -76,7 +112,7 @@ Each module is independently re-runnable and idempotent. Guards check if work is
 ~/fresh.sh
 ```
 
-Modules that detect their work is already done will skip. The summary at the end shows what succeeded, skipped, or failed.
+Modules that detect their work is already done will skip. `fresh.sh` is mode-aware — it reads `~/.dotfiles/.install-mode` (or `DOTFILES_INSTALL_MODE` env var) and skips modules not applicable for the current machine type. The summary at the end shows what succeeded, skipped, or failed.
 
 ### Individual module
 
@@ -106,6 +142,19 @@ brew bundle --file=~/Brewfile       # install new entries
 brew bundle cleanup --file=~/Brewfile --force  # remove unlisted entries
 ```
 
+### Brewfile Tag System
+
+Lines in `~/Brewfile` can be tagged with `@personal`, `@host`, and/or `@guest` in a trailing comment to control which modes include them. Untagged lines are included in all modes.
+
+```ruby
+brew "git"                  # no tag → included in all modes
+brew "lume"                 # @host @guest
+cask "cursor"               # @personal @guest
+cask "docker"               # @personal
+```
+
+The `brewfile-filter.sh` script strips lines that don't match the current mode before passing the Brewfile to `brew bundle`. A line matches if it has no `@mode` tags at all, or if at least one of its tags matches the active mode.
+
 ## File Structure
 
 ```
@@ -116,6 +165,7 @@ brew bundle cleanup --file=~/Brewfile --force  # remove unlisted entries
 │   └── settings.json              # Setup hook + pre-approved permissions
 ├── .dotfiles/
 │   ├── lib/
+│   │   ├── brewfile-filter.sh     # Filters Brewfile by @mode tags (personal/host/guest)
 │   │   ├── brewfile-selector.sh   # Interactive Brewfile package selector TUI
 │   │   ├── claude-bootstrap.sh    # Claude Code bootstrap orchestrator
 │   │   ├── claude-init-window.sh  # Interactive auth window for Claude setup
