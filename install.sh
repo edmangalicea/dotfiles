@@ -99,7 +99,7 @@ fi
 log "Network OK"
 
 # ── Previous-run detection ───────────────────────────────────────────────
-INSTALL_MODE_FILE="$HOME/.dotfiles/.install-mode"
+FORCE_INSTALL_FILE="$HOME/.dotfiles/.force-install"
 FRESH_DONE_MARKER="$HOME/.dotfiles/.fresh-install-done"
 
 if [[ -f "$FRESH_DONE_MARKER" ]]; then
@@ -129,13 +129,13 @@ if [[ -f "$FRESH_DONE_MARKER" ]]; then
       log "Install mode: INCREMENTAL (skip already-installed)"
       ;;
   esac
-  mkdir -p "$(dirname "$INSTALL_MODE_FILE")"
-  echo "$DOTFILES_FORCE_INSTALL" > "$INSTALL_MODE_FILE"
+  mkdir -p "$(dirname "$FORCE_INSTALL_FILE")"
+  echo "$DOTFILES_FORCE_INSTALL" > "$FORCE_INSTALL_FILE"
 else
   log "First run detected — proceeding with full install"
   export DOTFILES_FORCE_INSTALL=1
   mkdir -p "$HOME/.dotfiles"
-  echo "1" > "$HOME/.dotfiles/.install-mode"
+  echo "1" > "$FORCE_INSTALL_FILE"
 fi
 
 # ── Dry-run early exit ──────────────────────────────────────────────────
@@ -294,6 +294,37 @@ fi
 
 config config status.showUntrackedFiles no
 log "Set status.showUntrackedFiles = no"
+
+# ── Machine type selection ───────────────────────────────────────────────
+
+MACHINE_MODE_FILE="$HOME/.dotfiles/.install-mode"
+
+if [[ -n "${DOTFILES_INSTALL_MODE:-}" ]]; then
+  machine_mode="$DOTFILES_INSTALL_MODE"
+  log "Machine type set via environment: $machine_mode"
+else
+  echo ""
+  echo "╔══════════════════════════════════════════════════════════════╗"
+  echo "║  What type of machine is this?                             ║"
+  echo "║                                                            ║"
+  echo "║    [1] Personal  — Full install on a personal machine      ║"
+  echo "║    [2] VM Host   — Minimal install to run Lume macOS VMs   ║"
+  echo "║    [3] VM Guest  — Full install inside a virtual machine   ║"
+  echo "╚══════════════════════════════════════════════════════════════╝"
+  echo ""
+  printf "Enter choice [1/2/3]: "
+  read -r machine_choice
+  case "$machine_choice" in
+    2) machine_mode="host" ;;
+    3) machine_mode="guest" ;;
+    *) machine_mode="personal" ;;
+  esac
+fi
+
+mkdir -p "$(dirname "$MACHINE_MODE_FILE")"
+echo "$machine_mode" > "$MACHINE_MODE_FILE"
+export DOTFILES_INSTALL_MODE="$machine_mode"
+log "Machine type: $machine_mode"
 
 # ── Ensure required directories ──────────────────────────────────────────────
 

@@ -92,7 +92,7 @@ _sudo_cleanup() {
 # ── Install Mode Resolution ─────────────────────────────────────────────
 
 _resolve_install_mode() {
-  local mode_file="$HOME/.dotfiles/.install-mode"
+  local mode_file="$HOME/.dotfiles/.force-install"
   if [[ -n "${DOTFILES_FORCE_INSTALL+x}" ]]; then
     return 0
   fi
@@ -107,6 +107,45 @@ _resolve_install_mode
 
 is_force_install() {
   [[ "${DOTFILES_FORCE_INSTALL:-0}" == "1" ]]
+}
+
+# ── Machine Type Mode ──────────────────────────────────────────────────
+
+# Returns the machine type: personal, host, or guest
+# Checks env var first, then file, defaults to personal
+get_install_mode() {
+  if [[ -n "${DOTFILES_INSTALL_MODE:-}" ]]; then
+    echo "$DOTFILES_INSTALL_MODE"
+    return 0
+  fi
+  local mode_file="$HOME/.dotfiles/.install-mode"
+  if [[ -f "$mode_file" ]]; then
+    cat "$mode_file"
+    return 0
+  fi
+  echo "personal"
+}
+
+# Check if a module should run for the given machine type
+# Usage: should_run_module "01-xcode-cli" [mode]
+# Host mode runs: 01, 02, 03, 05, 07 only
+# Personal and guest run all modules
+should_run_module() {
+  local module_name="$1"
+  local mode="${2:-$(get_install_mode)}"
+
+  case "$mode" in
+    host)
+      case "$module_name" in
+        01-xcode-cli|02-homebrew|03-omz|05-brewfile|07-directories)
+          return 0 ;;
+        *)
+          return 1 ;;
+      esac
+      ;;
+    personal|guest|*)
+      return 0 ;;
+  esac
 }
 
 # ── Dry-Run Mode ───────────────────────────────────────────────────────────

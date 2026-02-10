@@ -25,6 +25,8 @@ else
   log "Install mode: INCREMENTAL (skip already-installed)"
 fi
 
+log "Machine type: $(get_install_mode)"
+
 # ── Result tracking ─────────────────────────────────────────────────────────
 typeset -a SUCCEEDED FAILED SKIPPED
 SUCCEEDED=()
@@ -81,6 +83,13 @@ for module in "${_all_modules[@]}"; do
   (( MODULE_CURRENT++ ))
   export MODULE_CURRENT
 
+  # Skip modules not applicable for the current machine type
+  if ! should_run_module "$module_name"; then
+    log "[$MODULE_CURRENT/$MODULE_TOTAL] Skipping $module_name (not applicable for $(get_install_mode) mode)"
+    SKIPPED+=("$module_name")
+    continue
+  fi
+
   log "[$MODULE_CURRENT/$MODULE_TOTAL] Running module: $module_name"
 
   # Track skip messages to detect "already done" modules.
@@ -114,7 +123,7 @@ log "Dotfiles setup complete."
 
 # ── Hand off to Claude Code ──────────────────────────────────────────────────
 # Create marker so the setup hook knows fresh.sh completed
-rm -f "$HOME/.dotfiles/.install-mode"
+rm -f "$HOME/.dotfiles/.force-install"
 touch "$HOME/.dotfiles/.fresh-install-done"
 
 # When called from install.sh, skip the Claude launch (install.sh handles it)

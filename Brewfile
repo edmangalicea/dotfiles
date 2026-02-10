@@ -3,52 +3,52 @@
 # ============================================
 
 tap "homebrew/bundle"
-tap "antoniorodr/memo"
-tap "steipete/tap"
-tap "yakitrak/yakitrak"
+tap "antoniorodr/memo"                                   # @personal
+tap "steipete/tap"                                       # @personal
+tap "yakitrak/yakitrak"                                  # @personal
 
 # ============================================
 # CLI Tools
 # ============================================
 
 # Remove large files or passwords from Git history
-brew "bfg"
+brew "bfg"                                               # @personal @guest
 # Dependency manager for Cocoa projects
-brew "cocoapods"
+brew "cocoapods"                                         # @personal @guest
 # Manage macOS Dock items from the command line
-brew "dockutil"
+brew "dockutil"                                          # @personal @guest
 # Fast and simple Node.js version manager
-brew "fnm"
+brew "fnm"                                               # @personal @guest
 # Interact with Google Gemini AI models from the command-line
-brew "gemini-cli"
+brew "gemini-cli"                                        # @personal @guest
 # GitHub command-line tool
 brew "gh"
 # Git extension for versioning large files
 brew "git-lfs"
 # Open source programming language for simple/reliable/efficient software
-brew "go"
+brew "go"                                                # @personal @guest
 # CLI email client written in Rust
-brew "himalaya"
+brew "himalaya"                                          # @personal
 # Lightweight and flexible command-line JSON processor
 brew "jq"
 # Create and manage Apple Silicon-native virtual machines
-brew "lume"
+brew "lume"                                              # @host @guest
 # Mac App Store command-line interface
-brew "mas"
+brew "mas"                                               # @personal
 # Remote terminal application
 brew "mosh"
 # Media player based on MPlayer and mplayer2
-brew "mpv"
+brew "mpv"                                               # @personal
 # Open-source, cross-platform JavaScript runtime environment
-brew "node@22"
+brew "node@22"                                           # @personal @guest
 # General-purpose speech recognition model
-brew "openai-whisper"
+brew "openai-whisper"                                    # @personal
 # Cryptography and SSL/TLS Toolkit
-brew "openssl@3"
+brew "openssl@3"                                         # @personal @guest
 # Swiss-army knife of markup format conversion
-brew "pandoc"
+brew "pandoc"                                            # @personal @guest
 # SSL tunneling program
-brew "stunnel"
+brew "stunnel"                                           # @personal @guest
 # Simplified and community-driven man pages
 brew "tldr"
 # Terminal multiplexer
@@ -56,39 +56,39 @@ brew "tmux"
 # Extremely fast Python package installer and resolver, written in Rust
 brew "uv"
 # Watch files and take action when they change
-brew "watchman"
+brew "watchman"                                          # @personal @guest
 
 # ============================================
 # Steipete Tools
 # ============================================
 
 # Fast X CLI for tweeting, replying, and reading
-brew "steipete/tap/bird"
+brew "steipete/tap/bird"                                 # @personal
 # Grep the GIF
-brew "steipete/tap/gifgrep"
+brew "steipete/tap/gifgrep"                              # @personal
 # Google CLI for Gmail, Calendar, Drive, and Contacts
-brew "steipete/tap/gogcli"
+brew "steipete/tap/gogcli"                               # @personal
 # Google Places API CLI
-brew "steipete/tap/goplaces"
+brew "steipete/tap/goplaces"                             # @personal
 # Send and read iMessage / SMS from the terminal
-brew "steipete/tap/imsg"
+brew "steipete/tap/imsg"                                 # @personal
 # macOS screenshots and AI vision analysis
-brew "steipete/tap/peekaboo"
+brew "steipete/tap/peekaboo"                             # @personal
 # Fast CLI for Apple Reminders
-brew "steipete/tap/remindctl"
+brew "steipete/tap/remindctl"                            # @personal
 # Link to clean text to summary
-brew "steipete/tap/summarize"
+brew "steipete/tap/summarize"                            # @personal
 # WhatsApp CLI built on whatsmeow
-brew "steipete/tap/wacli"
+brew "steipete/tap/wacli"                                # @personal
 
 # ============================================
 # Third-Party CLI
 # ============================================
 
 # CLI app to manage Apple Notes and Apple Reminders
-brew "memo"
+brew "memo"                                              # @personal
 # Obsidian CLI
-brew "yakitrak/yakitrak/obsidian-cli"
+brew "yakitrak/yakitrak/obsidian-cli"                    # @personal
 
 # ============================================
 # Fonts
@@ -103,88 +103,88 @@ cask "font-meslo-lg-nerd-font"
 
 # Security
 # Password manager
-cask "1password"
+cask "1password"                                         # @personal @guest
 # 1Password command-line tool
-cask "1password-cli"
+cask "1password-cli"                                     # @personal @guest
 
 # Development
 # Tools for building Android applications
-cask "android-studio"
+cask "android-studio"                                    # @personal @guest
 # Write, edit, and chat about your code with AI
-cask "cursor"
+cask "cursor"                                            # @personal @guest
 # Agentic IDE powered by AI Flow paradigm
-cask "windsurf"
+cask "windsurf"                                          # @personal @guest
 
 # AI Tools
 # Terminal-based AI coding assistant
 cask "claude-code"
 # Menu bar for Claude/Codex usage monitoring
-cask "claudebar"
+cask "claudebar"                                         # @personal
 # OpenAI's coding agent that runs in your terminal
-cask "codex"
+cask "codex"                                             # @personal @guest
 
 # Browsers
 # Web browser
-cask "google-chrome"
+cask "google-chrome"                                     # @personal @guest
 # Firefox-based browser
-cask "zen"
+cask "zen"                                               # @personal @guest
 
 # Productivity
 # Screen color temperature controller
-cask "flux-app"
+cask "flux-app"                                          # @personal
 # Microsoft Office alternative
-cask "libreoffice"
+cask "libreoffice"                                       # @personal
 # Knowledge base that works on top of a local folder of plain text Markdown files
-cask "obsidian"
+cask "obsidian"                                          # @personal
 # Control your tools with a few keystrokes
-cask "raycast"
+cask "raycast"                                           # @personal @guest
 # Move and resize windows using keyboard shortcuts or snap areas
-cask "rectangle"
+cask "rectangle"                                         # @personal @guest
 # Speech to text
-cask "superwhisper"
+cask "superwhisper"                                      # @personal
 
 # Communication
 # Voice and text chat software
-cask "discord"
+cask "discord"                                           # @personal
 # Team communication and collaboration software
-cask "slack"
+cask "slack"                                             # @personal
 # Messaging app with a focus on speed and security
-cask "telegram"
+cask "telegram"                                          # @personal
 # Video communication and virtual meeting platform
-cask "zoom"
+cask "zoom"                                              # @personal
 
 # Media
 # E-books management software
-cask "calibre"
+cask "calibre"                                           # @personal
 # Open-source software for live streaming and screen recording
-cask "obs"
+cask "obs"                                               # @personal
 # Music streaming service
-cask "spotify"
+cask "spotify"                                           # @personal
 # Multimedia player
-cask "vlc"
+cask "vlc"                                               # @personal
 
 # Utilities
 # Open-source keystroke visualiser
-cask "keycastr"
+cask "keycastr"                                          # @personal
 # Virtual machines UI using QEMU
-cask "utm"
+cask "utm"                                               # @personal
 # Mesh VPN
-cask "tailscale-app"
+cask "tailscale-app"                                     # @personal @guest
 # Rust-based terminal
-cask "warp"
+cask "warp"                                              # @personal @guest
 
 # ============================================
 # VS Code / Cursor Extensions
 # ============================================
 
-vscode "anthropic.claude-code"
-vscode "openai.chatgpt"
-vscode "rooveterinaryinc.roo-cline"
-vscode "saoudrizwan.claude-dev"
+vscode "anthropic.claude-code"                           # @personal @guest
+vscode "openai.chatgpt"                                  # @personal @guest
+vscode "rooveterinaryinc.roo-cline"                      # @personal @guest
+vscode "saoudrizwan.claude-dev"                          # @personal @guest
 
 # ============================================
 # Mac App Store
 # ============================================
 
 # Screen time limiter
-mas "Jomo - Screen Time Blocker", id: 1609960918
+mas "Jomo - Screen Time Blocker", id: 1609960918        # @personal
