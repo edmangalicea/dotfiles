@@ -70,10 +70,3 @@ fi
 
 # ── Aliases ──────────────────────────────────────────────────────────────────
 alias t='tmux new -As main'
-
-# bun completions
-[ -s "/Users/base-mac-os/.bun/_bun" ] && source "/Users/base-mac-os/.bun/_bun"
-
-# bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
