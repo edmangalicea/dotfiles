@@ -33,6 +33,8 @@ brew "himalaya"                                          # @guest
 brew "jq"
 # Create and manage Apple Silicon-native virtual machines
 brew "lume"                                              # @host @guest
+# Non-interactive SSH password authentication
+brew "sshpass"                                           # @host
 # Mac App Store command-line interface
 brew "mas"                                               # @personal
 # Remote terminal application

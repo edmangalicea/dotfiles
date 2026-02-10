@@ -7,6 +7,13 @@ step "Directories & Permissions"
 mkdir -p "$HOME/Development"
 ok "~/Development exists"
 
+# ── Shared directory (VM shared filesystem) ────────────────────────────────
+local mode=$(get_install_mode)
+if [[ "$mode" == "host" || "$mode" == "guest" ]]; then
+  mkdir -p "$HOME/shared"
+  ok "~/shared exists (VM shared directory)"
+fi
+
 # ── SSH directory ────────────────────────────────────────────────────────────
 mkdir -p "$HOME/.ssh"
 chmod 700 "$HOME/.ssh"

@@ -1,7 +1,7 @@
 ---
 name: install
 description: Run the dotfiles setup — install all dependencies and configure the system
-allowed-tools: Bash, Read, Grep, Glob, AskUserQuestion
+allowed-tools: Bash, Read, Grep, Glob, AskUserQuestion, mcp__lume__lume_list_vms, mcp__lume__lume_get_vm, mcp__lume__lume_run_vm, mcp__lume__lume_stop_vm, mcp__lume__lume_exec, mcp__lume__lume_create_vm, mcp__lume__lume_delete_vm
 ---
 
 # Dotfiles Install Command
@@ -152,84 +152,133 @@ The script is mode-aware — it reads `~/.dotfiles/.install-mode` and automatica
 
 **This step only runs when the machine type is `host`.** After host modules complete (01, 02, 03, 05, 07), continue with VM creation and guest bootstrapping.
 
-### Phase 1: VM Creation
+### Critical Workarounds
+
+These are battle-tested workarounds from real VM provisioning. **Do not skip or simplify them:**
+
+1. **MCP `lume_create_vm` with `unattended` always times out** — VM creation takes 15-30 minutes, exceeding MCP timeout. Always use CLI `lume create` with `run_in_background: true`.
+2. **Built-in preset name `tahoe` doesn't resolve** — Download the YAML file directly and pass the file path with `--unattended /tmp/lume-unattended-tahoe.yml`.
+3. **MCP `lume_run_vm` with `shared_dir` silently fails** — The shared directory is not mounted. Always use CLI `lume run` with `--shared-dir`.
+4. **MCP `lume_stop_vm` is intermittent** — If stop hangs, find and kill the VM process via `lsof ~/.lume/<NAME>/nvram.bin` as a fallback.
+5. **`lume_exec` may timeout on long commands** — For anything that takes more than a few minutes (install.sh, fresh.sh), use `nohup` + log polling pattern.
+6. **install.sh hangs at `exec claude` in headless SSH** — Set `DOTFILES_NONINTERACTIVE=1` to skip all interactive prompts and the Claude handoff.
+7. **fresh.sh hangs at `exec claude --dangerously-skip-permissions`** — Set `DOTFILES_SKIP_CLAUDE_LAUNCH=1` to exit before the exec.
+
+### Phase 1: VM Creation (CLI-only)
 
 1. Ask the user for VM configuration:
    - VM name (default: `dev-vm`)
-   - Disk size (default: `80` GB)
+   - Disk size (default: `50` GB)
 
-2. Create the macOS VM via Lume (installed by the host Brewfile):
+2. Ensure `~/shared` exists:
    ```bash
-   lume create <VM_NAME> --os macos --ipsw latest --disk-size <SIZE> --unattended tahoe
-   ```
-   `--unattended tahoe` creates user `lume`/`lume` with SSH enabled. This may take a while (macOS IPSW download + install).
-
-3. Start the VM with a shared directory:
-   ```bash
-   lume run <VM_NAME> --shared-dir ~/shared:rw --no-display
+   mkdir -p ~/shared
    ```
 
-4. Wait for the VM to be SSH-ready:
+3. **Download tahoe preset** (workaround #2 — built-in name fails):
    ```bash
-   # Poll lume ls for VM IP
-   lume ls
-   # Once IP is available, test SSH
-   ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no lume@<VM_IP> echo ready
+   curl -fsSL "https://raw.githubusercontent.com/trycua/cua/main/libs/lume/src/Resources/unattended-presets/tahoe.yml" -o /tmp/lume-unattended-tahoe.yml
    ```
-   Poll every 10 seconds with a 5-minute timeout. If it fails, ask the user: retry/skip/abort.
+   Verify the download succeeded (non-empty file). If that URL fails, try the alternate:
+   ```bash
+   curl -fsSL "https://raw.githubusercontent.com/trycua/cua/main/libs/lume/resources/unattended-tahoe.yml" -o /tmp/lume-unattended-tahoe.yml
+   ```
+
+4. Check if a VM with the same name already exists via `lume ls`. If it does, ask the user whether to delete and recreate it or use a different name. To delete: `echo "y" | lume delete <NAME>`.
+
+5. **Create the VM via CLI** (workaround #1 — MCP create always times out):
+   ```bash
+   lume create --ipsw latest --disk-size <SIZE>GB --unattended /tmp/lume-unattended-tahoe.yml --no-display <NAME>
+   ```
+   Run with `timeout: 600000` and `run_in_background: true`. The `--unattended` tahoe preset creates a user `lume` with password `lume` and SSH enabled.
+
+6. **Poll creation progress** every 90 seconds using `lume ls` or MCP `lume_get_vm`. Look for the VM status to change from creating to stopped/ready. Creation typically takes 15-30 minutes.
+
+7. **Start the VM via CLI** (workaround #3 — MCP shared_dir silently fails):
+   ```bash
+   lume run <NAME> --shared-dir $HOME/shared:rw --no-display
+   ```
+   Run in background. Wait 30 seconds, then verify with `lume ls`.
+
+8. Verify SSH connectivity via MCP:
+   ```
+   lume_exec(vm_name=<NAME>, command="whoami")
+   ```
+   Expected output: `lume`. If it fails, retry a few times with 15-second delays (VM may still be booting).
+
+9. Verify shared directory is mounted:
+   ```
+   lume_exec(vm_name=<NAME>, command="ls /Volumes/")
+   ```
+   Expected: output includes `My Shared Files`.
 
 ### Phase 2: Configure Lume MCP Server on Host
 
-1. Install the CUA MCP server:
+1. Use the **native Lume MCP server** (not cua-mcp-server):
    ```bash
-   uv pip install cua-mcp-server
-   ```
-   (Use `uv` if available, otherwise `pip install cua-mcp-server`)
-
-2. Add to Claude Code as an MCP server:
-   ```bash
-   claude mcp add --transport stdio --scope user lume -- cua-mcp-server
+   claude mcp add --transport stdio --scope user lume -- lume serve --mcp
    ```
 
-3. Verify the MCP server is available. If it fails, warn the user and provide fallback SSH instructions.
+2. Verify the MCP server is available by calling `lume_list_vms`. If it fails, warn the user and provide SSH fallback:
+   ```bash
+   sshpass -p lume ssh -o StrictHostKeyChecking=no lume@<VM_IP> '<command>'
+   ```
 
-### Phase 3: Guest Bootstrap via SSH
+### Phase 3: Guest Bootstrap via MCP
 
-Using SSH (or the Lume MCP server if available), bootstrap the VM:
+1. **Set up passwordless sudo** for the `lume` user (may already be configured by tahoe preset, but ensure it):
+   ```
+   lume_exec(vm_name=<NAME>, command="echo 'lume' | sudo -S sh -c 'echo \"lume ALL=(ALL) NOPASSWD:ALL\" > /etc/sudoers.d/lume && chmod 0440 /etc/sudoers.d/lume'")
+   ```
 
-```bash
-VM_IP=$(lume ls | grep <VM_NAME> | awk '{print $NF}')
+2. **Run install.sh** with non-interactive flags:
+   ```
+   lume_exec(vm_name=<NAME>, command="DOTFILES_INSTALL_MODE=guest DOTFILES_NONINTERACTIVE=1 zsh -c \"$(curl -fsSL https://raw.githubusercontent.com/edmangalicea/dotfiles/main/install.sh)\"")
+   ```
+   **Expected behavior**: This will likely timeout at the MCP level because install.sh takes a long time. That's OK — proceed to step 3.
 
-# 1. Install Xcode CLI tools
-ssh lume@$VM_IP 'xcode-select --install 2>/dev/null; until xcode-select -p &>/dev/null; do sleep 5; done'
+3. **If timeout, verify dotfiles were cloned**, then run fresh.sh via nohup (workaround #5):
+   ```
+   lume_exec(vm_name=<NAME>, command="test -d ~/.cfg && echo CLONED || echo MISSING")
+   ```
+   If cloned, run fresh.sh in the background:
+   ```
+   lume_exec(vm_name=<NAME>, command="nohup zsh -c 'source $HOME/.dotfiles/lib/utils.sh && DOTFILES_INSTALL_MODE=guest DOTFILES_SKIP_CLAUDE_LAUNCH=1 $HOME/fresh.sh' > /tmp/fresh-install.log 2>&1 &")
+   ```
+   If not cloned, the install.sh may still be running. Wait and retry.
 
-# 2. Install Homebrew
-ssh lume@$VM_IP '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+4. **Poll fresh.sh progress** every 60 seconds (workaround #5):
+   ```
+   lume_exec(vm_name=<NAME>, command="tail -20 /tmp/fresh-install.log")
+   lume_exec(vm_name=<NAME>, command="pgrep -f fresh.sh && echo RUNNING || echo DONE")
+   ```
+   Look for "Dotfiles setup complete." or the summary table output. Keep polling until DONE.
 
-# 3. Clone dotfiles bare repo
-ssh lume@$VM_IP 'git clone --bare https://github.com/edmangalicea/dotfiles.git ~/.cfg && /usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME checkout && /usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME config status.showUntrackedFiles no'
+5. **Verify the installation** succeeded:
+   ```
+   lume_exec(vm_name=<NAME>, command="brew list | head -20")
+   lume_exec(vm_name=<NAME>, command="ls ~/.cfg && echo DOTFILES_OK")
+   lume_exec(vm_name=<NAME>, command="ls ~/.dotfiles/modules/ | wc -l")
+   ```
 
-# 4. Set install mode to guest
-ssh lume@$VM_IP 'mkdir -p ~/.dotfiles && echo guest > ~/.dotfiles/.install-mode'
+### Phase 4: Summary
+
+Show a VM details box:
 ```
-
-Each step should be run individually with error checking. If any step fails, ask the user: retry/skip/abort.
-
-### Phase 4: Guest Agentic Install
-
-Tell the user: "The VM is bootstrapped. To complete the guest install, you have two options:"
-
-1. **MCP-orchestrated** (if MCP server was configured): Use the Lume MCP server to continue running the guest install from this host Claude session. Execute commands inside the VM via MCP, running the guest-mode modules (all 10 modules with guest Brewfile).
-
-2. **Manual SSH** (fallback): SSH into the VM and run the install there:
-   ```bash
-   ssh lume@<VM_IP>
-   # Inside the VM:
-   DOTFILES_INSTALL_MODE=guest fresh.sh
-   # Or for agentic: run `claude` and use /install
-   ```
-
-Ask the user which approach they prefer.
+╔══════════════════════════════════════════════════════════════╗
+║  VM Ready                                                    ║
+║                                                              ║
+║  Name:       <NAME>                                          ║
+║  IP:         <IP from lume ls>                               ║
+║  SSH:        sshpass -p lume ssh lume@<IP>                   ║
+║  Shared dir: ~/shared (host) ↔ /Volumes/My Shared Files     ║
+║                                                              ║
+║  Manual steps remaining:                                     ║
+║    1. Claude Code auth:  ssh in, run `claude --init`         ║
+║    2. SSH key:           ssh-keygen -t ed25519               ║
+║    3. GitHub CLI:        gh auth login                       ║
+╚══════════════════════════════════════════════════════════════╝
+```
 
 ## Step 5: Summary
 

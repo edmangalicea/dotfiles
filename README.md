@@ -51,6 +51,16 @@ DOTFILES_INSTALL_MODE=guest ~/fresh.sh
 
 The selected mode is persisted to `~/.dotfiles/.install-mode` and used by subsequent runs of `fresh.sh`.
 
+### Non-interactive mode
+
+Set `DOTFILES_NONINTERACTIVE=1` for fully headless execution (e.g., inside a VM provisioned via MCP/SSH):
+
+```bash
+DOTFILES_INSTALL_MODE=guest DOTFILES_NONINTERACTIVE=1 zsh -c "$(curl -fsSL https://raw.githubusercontent.com/edmangalicea/dotfiles/main/install.sh)"
+```
+
+This skips all interactive prompts, auto-selects force install, requires passwordless sudo, skips the Claude auth window, and sets `DOTFILES_SKIP_CLAUDE_LAUNCH=1` to prevent fresh.sh from hanging at `exec claude`.
+
 ## Agentic Setup (via Claude Code)
 
 The install script automatically installs [Claude Code](https://claude.ai) and launches an interactive agentic setup session:
@@ -77,6 +87,20 @@ For fully non-interactive / headless use, `~/fresh.sh` still works standalone:
 ~/fresh.sh
 ```
 
+## Host → VM → Guest Bootstrap Flow
+
+When installing in **VM Host** mode, the `/install` command orchestrates end-to-end VM creation and guest provisioning:
+
+1. **Host setup** — Runs host modules (01, 02, 03, 05, 07) to install Lume, sshpass, and other host dependencies
+2. **VM creation** — Downloads the tahoe unattended preset, creates a macOS VM via `lume create` CLI with SSH-ready user `lume`/`lume`
+3. **VM start** — Starts the VM with a shared directory (`~/shared` ↔ `/Volumes/My Shared Files`)
+4. **Guest bootstrap** — Runs `install.sh` inside the VM with `DOTFILES_NONINTERACTIVE=1` and `DOTFILES_INSTALL_MODE=guest` via Lume MCP exec, then polls `fresh.sh` progress via nohup + log tailing
+5. **Verification** — Confirms Homebrew packages, dotfiles, and modules are installed in the guest
+
+This flow incorporates battle-tested workarounds for Lume MCP limitations (creation timeouts, silent shared_dir failures, exec timeouts on long commands). See the `/install` command source for full details.
+
+> **Note:** The `edmangalicea/vm-bootstrap` repo has been archived. Its VM creation and guest provisioning logic is now integrated here.
+
 ## What Happens During Install
 
 1. **Pre-flight** — verifies network connectivity, logs macOS version
@@ -97,7 +121,7 @@ For fully non-interactive / headless use, `~/fresh.sh` still works standalone:
 | `04-rosetta` | Installs Rosetta 2 on Apple Silicon (skips on Intel or if already running) |
 | `05-brewfile` | Filters `~/Brewfile` by machine mode (`@mode` tags), runs `brew bundle`, then `brew cleanup` |
 | `06-runtime` | Installs bun, initializes fnm |
-| `07-directories` | Creates `~/Development`, sets `~/.ssh` and `~/.config/gh` permissions |
+| `07-directories` | Creates `~/Development`, `~/shared` (host/guest), sets `~/.ssh` and `~/.config/gh` permissions |
 | `08-macos-defaults` | Configures Finder, keyboard repeat, Dock preferences |
 | `09-dock` | Configures Dock layout via `dockutil` (removes defaults, adds preferred apps in order) |
 | `10-claude-config` | Clones `claude-code-backup` repo, restores Claude Code settings/hooks/commands, optional auto-sync daemon |
@@ -161,7 +185,8 @@ The `brewfile-filter.sh` script strips lines that don't match the current mode b
 ~/
 ├── .claude/
 │   ├── commands/
-│   │   └── install.md             # /install command for agentic setup
+│   │   ├── install.md             # /install command for agentic setup
+│   │   └── vm.md                  # /vm command for Lume VM management
 │   └── settings.json              # Setup hook + pre-approved permissions
 ├── .dotfiles/
 │   ├── lib/

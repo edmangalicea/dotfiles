@@ -23,6 +23,9 @@ fail() { printf '[%s]  \033[1;31mFAIL\033[0m  %s\n' "$(_ts)" "$*" | tee -a "$DOT
 warn() { printf '[%s]  \033[1;33mWARN\033[0m  %s\n' "$(_ts)" "$*" | tee -a "$DOTFILES_LOG"; }
 die()  { fail "$*"; exit 1; }
 
+# ── Non-interactive mode (for headless VM execution) ───────────────────────────
+is_noninteractive() { [[ "${DOTFILES_NONINTERACTIVE:-0}" == "1" ]]; }
+
 # ── Config alias (bare repo git wrapper) ─────────────────────────────────────
 
 config() {
@@ -63,27 +66,32 @@ _close_auth_window() {
 }
 
 # ── Install mode prompt ──────────────────────────────────────────────────
-echo ""
-echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║  Dotfiles Installer                                        ║"
-echo "║                                                            ║"
-echo "║    [I] Install    — Run the full installation              ║"
-echo "║                                                            ║"
-echo "║    [D] Dry Run    — Simulate the install (nothing changes) ║"
-echo "╚══════════════════════════════════════════════════════════════╝"
-echo ""
-printf "Enter choice [I/D]: "
-read -r run_mode
-case "$run_mode" in
-  [Dd]*)
-    export DOTFILES_DRY_RUN=1
-    export DOTFILES_LOG="/dev/null"
-    printf '\n\033[1;33m── DRY RUN MODE — nothing will be modified ──\033[0m\n\n'
-    ;;
-  *)
-    export DOTFILES_DRY_RUN=0
-    ;;
-esac
+if ! is_noninteractive; then
+  echo ""
+  echo "╔══════════════════════════════════════════════════════════════╗"
+  echo "║  Dotfiles Installer                                        ║"
+  echo "║                                                            ║"
+  echo "║    [I] Install    — Run the full installation              ║"
+  echo "║                                                            ║"
+  echo "║    [D] Dry Run    — Simulate the install (nothing changes) ║"
+  echo "╚══════════════════════════════════════════════════════════════╝"
+  echo ""
+  printf "Enter choice [I/D]: "
+  read -r run_mode
+  case "$run_mode" in
+    [Dd]*)
+      export DOTFILES_DRY_RUN=1
+      export DOTFILES_LOG="/dev/null"
+      printf '\n\033[1;33m── DRY RUN MODE — nothing will be modified ──\033[0m\n\n'
+      ;;
+    *)
+      export DOTFILES_DRY_RUN=0
+      ;;
+  esac
+else
+  log "Non-interactive mode — proceeding with full install"
+  export DOTFILES_DRY_RUN=0
+fi
 
 is_dry_run_mode() { [[ "${DOTFILES_DRY_RUN:-0}" == "1" ]]; }
 
@@ -104,31 +112,36 @@ FRESH_DONE_MARKER="$HOME/.dotfiles/.fresh-install-done"
 
 if [[ -f "$FRESH_DONE_MARKER" ]]; then
   log "Previous installation detected"
-  echo ""
-  echo "╔══════════════════════════════════════════════════════════════╗"
-  echo "║  A previous dotfiles installation was detected.            ║"
-  echo "║                                                            ║"
-  echo "║  Choose an install mode:                                   ║"
-  echo "║                                                            ║"
-  echo "║    [F] Force       — Reinstall everything, even software   ║"
-  echo "║                      that is already installed             ║"
-  echo "║                                                            ║"
-  echo "║    [I] Incremental — Only install what's missing           ║"
-  echo "║                      (skip already-installed items)        ║"
-  echo "╚══════════════════════════════════════════════════════════════╝"
-  echo ""
-  printf "Enter choice [F/I]: "
-  read -r install_choice
-  case "$install_choice" in
-    [Ff]*)
-      export DOTFILES_FORCE_INSTALL=1
-      log "Install mode: FORCE (reinstall everything)"
-      ;;
-    *)
-      export DOTFILES_FORCE_INSTALL=0
-      log "Install mode: INCREMENTAL (skip already-installed)"
-      ;;
-  esac
+  if ! is_noninteractive; then
+    echo ""
+    echo "╔══════════════════════════════════════════════════════════════╗"
+    echo "║  A previous dotfiles installation was detected.            ║"
+    echo "║                                                            ║"
+    echo "║  Choose an install mode:                                   ║"
+    echo "║                                                            ║"
+    echo "║    [F] Force       — Reinstall everything, even software   ║"
+    echo "║                      that is already installed             ║"
+    echo "║                                                            ║"
+    echo "║    [I] Incremental — Only install what's missing           ║"
+    echo "║                      (skip already-installed items)        ║"
+    echo "╚══════════════════════════════════════════════════════════════╝"
+    echo ""
+    printf "Enter choice [F/I]: "
+    read -r install_choice
+    case "$install_choice" in
+      [Ff]*)
+        export DOTFILES_FORCE_INSTALL=1
+        log "Install mode: FORCE (reinstall everything)"
+        ;;
+      *)
+        export DOTFILES_FORCE_INSTALL=0
+        log "Install mode: INCREMENTAL (skip already-installed)"
+        ;;
+    esac
+  else
+    export DOTFILES_FORCE_INSTALL=1
+    log "Non-interactive mode — forcing full reinstall"
+  fi
   mkdir -p "$(dirname "$FORCE_INSTALL_FILE")"
   echo "$DOTFILES_FORCE_INSTALL" > "$FORCE_INSTALL_FILE"
 else
@@ -152,8 +165,16 @@ fi
 
 # ── Sudo keep-alive ─────────────────────────────────────────────────────────
 
-echo "Enter your sudo password (it will be cached for the rest of the install):"
-sudo -v || die "sudo authentication failed"
+if ! is_noninteractive; then
+  echo "Enter your sudo password (it will be cached for the rest of the install):"
+  sudo -v || die "sudo authentication failed"
+else
+  # Non-interactive: the lume user in tahoe VMs has NOPASSWD sudo
+  if ! sudo -n true 2>/dev/null; then
+    die "Non-interactive mode requires passwordless sudo (sudo -n true failed)"
+  fi
+  log "Non-interactive mode — passwordless sudo verified"
+fi
 
 # ── Passwordless sudo for the install duration ────────────────────────────
 SUDO_USER=$(whoami)
@@ -302,7 +323,7 @@ MACHINE_MODE_FILE="$HOME/.dotfiles/.install-mode"
 if [[ -n "${DOTFILES_INSTALL_MODE:-}" ]]; then
   machine_mode="$DOTFILES_INSTALL_MODE"
   log "Machine type set via environment: $machine_mode"
-else
+elif ! is_noninteractive; then
   echo ""
   echo "╔══════════════════════════════════════════════════════════════╗"
   echo "║  What type of machine is this?                             ║"
@@ -319,6 +340,9 @@ else
     3) machine_mode="guest" ;;
     *) machine_mode="personal" ;;
   esac
+else
+  machine_mode="personal"
+  log "Non-interactive mode — defaulting to personal"
 fi
 
 mkdir -p "$(dirname "$MACHINE_MODE_FILE")"
@@ -352,30 +376,35 @@ rm -f "$MARKER_SUCCESS" "$MARKER_FAILURE"
 # ── Open Claude auth in a new Terminal window ───────────────────────────────
 
 CLAUDE_WINDOW_OPENED=0
-INIT_SCRIPT="$HOME/.dotfiles/lib/claude-init-window.sh"
 
-if command -v claude &>/dev/null && [[ -f "$INIT_SCRIPT" ]]; then
-  chmod +x "$INIT_SCRIPT" 2>/dev/null
-  log "Opening new Terminal window for Claude Code setup..."
+if is_noninteractive; then
+  log "Non-interactive mode — skipping Claude auth window (osascript unavailable in SSH)"
+else
+  INIT_SCRIPT="$HOME/.dotfiles/lib/claude-init-window.sh"
 
-  AUTH_WINDOW_ID=$(osascript <<APPLESCRIPT 2>/dev/null
+  if command -v claude &>/dev/null && [[ -f "$INIT_SCRIPT" ]]; then
+    chmod +x "$INIT_SCRIPT" 2>/dev/null
+    log "Opening new Terminal window for Claude Code setup..."
+
+    AUTH_WINDOW_ID=$(osascript <<APPLESCRIPT 2>/dev/null
 tell application "Terminal"
   do script "exec zsh '${INIT_SCRIPT}'"
   return id of front window
 end tell
 APPLESCRIPT
-  )
+    )
 
-  if [[ -n "$AUTH_WINDOW_ID" ]]; then
-    CLAUDE_WINDOW_OPENED=1
-    echo "$AUTH_WINDOW_ID" > "$BOOTSTRAP_DIR/auth-window-id"
-    log "Claude setup window opened (window ID: $AUTH_WINDOW_ID)"
+    if [[ -n "$AUTH_WINDOW_ID" ]]; then
+      CLAUDE_WINDOW_OPENED=1
+      echo "$AUTH_WINDOW_ID" > "$BOOTSTRAP_DIR/auth-window-id"
+      log "Claude setup window opened (window ID: $AUTH_WINDOW_ID)"
+    else
+      warn "Could not open Terminal window — skipping parallel Claude setup"
+    fi
   else
-    warn "Could not open Terminal window — skipping parallel Claude setup"
-  fi
-else
-  if ! command -v claude &>/dev/null; then
-    warn "Claude Code not available — skipping Claude setup window"
+    if ! command -v claude &>/dev/null; then
+      warn "Claude Code not available — skipping Claude setup window"
+    fi
   fi
 fi
 
@@ -450,7 +479,7 @@ elif [[ -f "$MARKER_FAILURE" ]]; then
   warn "Run 'claude --init' manually to retry"
 fi
 
-if (( CLAUDE_OK )) && command -v claude &>/dev/null; then
+if ! is_noninteractive && (( CLAUDE_OK )) && command -v claude &>/dev/null; then
   echo ""
   echo "╔══════════════════════════════════════════════════════════════╗"
   echo "║  Prerequisites complete. Claude Code will take over and     ║"
@@ -462,11 +491,15 @@ if (( CLAUDE_OK )) && command -v claude &>/dev/null; then
   exec zsh "$HOME/.dotfiles/lib/claude-bootstrap.sh"
 fi
 
-# Fallback: Claude auth failed or unavailable — run fresh.sh directly
+# Fallback: Claude auth failed, unavailable, or non-interactive — run fresh.sh directly
 log "Running fresh.sh modules (fallback — no Claude orchestration)..."
 if [[ -f "$HOME/fresh.sh" ]]; then
   chmod +x "$HOME/fresh.sh"
-  DOTFILES_SKIP_CLAUDE_LAUNCH=1 DOTFILES_SUDO_CACHED=1 "$HOME/fresh.sh"
+  if is_noninteractive; then
+    DOTFILES_SKIP_CLAUDE_LAUNCH=1 DOTFILES_NONINTERACTIVE=1 DOTFILES_SUDO_CACHED=1 "$HOME/fresh.sh"
+  else
+    DOTFILES_SKIP_CLAUDE_LAUNCH=1 DOTFILES_SUDO_CACHED=1 "$HOME/fresh.sh"
+  fi
 else
   die "fresh.sh not found"
 fi
