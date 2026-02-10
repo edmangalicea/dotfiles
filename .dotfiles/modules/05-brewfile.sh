@@ -5,6 +5,8 @@ step "Brewfile Packages"
 
 FILTERED="$HOME/.dotfiles/.brewfile-filtered"
 SELECTOR="$HOME/.dotfiles/lib/brewfile-selector.sh"
+SELECTOR_WINDOW="$HOME/.dotfiles/lib/brewfile-selector-window.sh"
+BOOTSTRAP_DIR="$HOME/.dotfiles/.bootstrap"
 INSTALL_BREWFILE="$HOME/Brewfile"
 
 if [[ ! -f "$HOME/Brewfile" ]]; then
@@ -24,6 +26,93 @@ elif [[ -t 0 && -t 1 ]] && [[ -f "$SELECTOR" ]]; then
     INSTALL_BREWFILE="$FILTERED"
   else
     log "Selector cancelled or failed — using full Brewfile"
+  fi
+elif [[ -f "$SELECTOR" && -f "$SELECTOR_WINDOW" ]]; then
+  # Non-TTY (agentic mode) — open selector in a new Terminal.app window
+  log "No TTY available — opening Brewfile selector in new Terminal window..."
+
+  mkdir -p "$BOOTSTRAP_DIR"
+
+  # Clean stale marker files
+  rm -f "$BOOTSTRAP_DIR/selector-done" \
+        "$BOOTSTRAP_DIR/selector-failed" \
+        "$BOOTSTRAP_DIR/selector-script.pid" \
+        "$BOOTSTRAP_DIR/selector-window-id"
+
+  # Open selector in a new Terminal.app window
+  local window_id
+  window_id=$(osascript <<APPLESCRIPT
+tell application "Terminal"
+  activate
+  do script "exec zsh '${SELECTOR_WINDOW}' '${HOME}/Brewfile' '${FILTERED}' '${BOOTSTRAP_DIR}'"
+  return id of front window
+end tell
+APPLESCRIPT
+  ) 2>/dev/null || {
+    warn "Could not open Terminal.app window (headless environment?) — using full Brewfile"
+    window_id=""
+  }
+
+  if [[ -n "$window_id" ]]; then
+    echo "$window_id" > "$BOOTSTRAP_DIR/selector-window-id"
+    log "Selector window opened (id=$window_id) — waiting for selection..."
+
+    # Poll for completion markers (5-minute timeout)
+    local elapsed=0
+    local timeout=300
+    local reminder_interval=30
+    local next_reminder=$reminder_interval
+
+    while (( elapsed < timeout )); do
+      if [[ -f "$BOOTSTRAP_DIR/selector-done" ]]; then
+        log "Selector completed successfully"
+        break
+      fi
+      if [[ -f "$BOOTSTRAP_DIR/selector-failed" ]]; then
+        log "Selector was cancelled or failed"
+        break
+      fi
+      sleep 1
+      elapsed=$((elapsed + 1))
+      if (( elapsed >= next_reminder )); then
+        log "Still waiting for Brewfile selection... (${elapsed}s elapsed)"
+        next_reminder=$((next_reminder + reminder_interval))
+      fi
+    done
+
+    if (( elapsed >= timeout )); then
+      warn "Selector timed out after ${timeout}s"
+    fi
+
+    # Close the Terminal window
+    if [[ -f "$BOOTSTRAP_DIR/selector-window-id" ]]; then
+      local wid
+      wid=$(< "$BOOTSTRAP_DIR/selector-window-id")
+      osascript <<APPLESCRIPT 2>/dev/null || true
+tell application "Terminal"
+  repeat with w in windows
+    if id of w is $wid then
+      close w
+      exit repeat
+    end if
+  end repeat
+end tell
+APPLESCRIPT
+    fi
+
+    # Clean up marker files
+    rm -f "$BOOTSTRAP_DIR/selector-done" \
+          "$BOOTSTRAP_DIR/selector-failed" \
+          "$BOOTSTRAP_DIR/selector-script.pid" \
+          "$BOOTSTRAP_DIR/selector-window-id"
+
+    # Use filtered file if it was created
+    if [[ -f "$FILTERED" ]]; then
+      log "Using filtered Brewfile from selector"
+      INSTALL_BREWFILE="$FILTERED"
+    else
+      warn "No filtered Brewfile produced — using full Brewfile"
+    fi
   fi
 fi
 
