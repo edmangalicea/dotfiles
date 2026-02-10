@@ -320,8 +320,10 @@ _move_cursor() {
   cursor=$new_pos
 }
 
-# Put terminal in raw mode for keypress reading
-stty raw -echo 2>/dev/null
+# Disable canonical mode (character-at-a-time input) and echo,
+# but keep output processing (OPOST) so \n → \r\n works correctly.
+# stty raw disables OPOST which breaks TUI rendering.
+stty -icanon -echo 2>/dev/null
 
 _render
 
