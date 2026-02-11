@@ -11,7 +11,7 @@
 #
 # Example Brewfile lines:
 #   brew "git"                  # no tag → included in all modes
-#   brew "lume"                 # @host @guest
+#   brew "sshpass"              # @host
 #   cask "cursor"               # @personal @guest
 
 set -euo pipefail

@@ -145,9 +145,36 @@ APPLESCRIPT
   fi
 fi
 
-spin "Installing Brewfile packages..." brew bundle --verbose --file="$INSTALL_BREWFILE" || {
-  warn "brew bundle had partial failures (some casks may require manual install)"
-}
+# Count expected packages from the Brewfile before running bundle
+local expected_formulae expected_casks expected_total
+expected_formulae=$(grep -cE '^\s*brew\s' "$INSTALL_BREWFILE" 2>/dev/null || echo 0)
+expected_casks=$(grep -cE '^\s*cask\s' "$INSTALL_BREWFILE" 2>/dev/null || echo 0)
+expected_total=$((expected_formulae + expected_casks))
+
+local bundle_rc=0
+spin "Installing Brewfile packages..." brew bundle --verbose --file="$INSTALL_BREWFILE" || bundle_rc=$?
+
+# Count what actually got installed
+local installed_formulae installed_casks installed_total
+installed_formulae=$(brew list --formula 2>/dev/null | wc -l | tr -d ' ')
+installed_casks=$(brew list --cask 2>/dev/null | wc -l | tr -d ' ')
+installed_total=$((installed_formulae + installed_casks))
+
+if (( bundle_rc != 0 )); then
+  if (( installed_total == 0 && expected_total > 0 )); then
+    # Total failure — zero packages installed
+    fail "brew bundle failed — 0 of ${expected_total} expected packages installed"
+    fail "Check network connectivity and retry: brew bundle --file=~/Brewfile"
+    return 1
+  elif (( expected_total > 0 )) && (( installed_total * 2 < expected_total )); then
+    # Major failure — less than 50% installed
+    warn "brew bundle had major failures — only ${installed_total} of ${expected_total} expected packages installed"
+    warn "Retry failed packages: brew bundle --file=~/Brewfile"
+  else
+    # Partial failure — more than 50% installed
+    warn "brew bundle had partial failures (${installed_total}/${expected_total} packages present — some casks may require manual install)"
+  fi
+fi
 
 spin "Cleaning up..." brew cleanup --verbose
 
@@ -161,4 +188,9 @@ if [[ -f "$MODE_FILTERED" ]]; then
   log "Cleaned up mode-filtered Brewfile"
 fi
 
-ok "Brewfile packages installed"
+if (( bundle_rc != 0 && installed_total == 0 && expected_total > 0 )); then
+  fail "Brewfile packages FAILED — nothing was installed"
+  return 1
+fi
+
+ok "Brewfile packages installed (${installed_total} formulae+casks)"

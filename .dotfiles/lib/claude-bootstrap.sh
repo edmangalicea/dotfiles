@@ -92,6 +92,13 @@ if (( ! SUDO_OK )); then
   fi
 fi
 
+# ── TTY guard — prevent hang in headless/SSH contexts ───────────────────────
+if [[ ! -t 0 || ! -t 1 ]]; then
+  warn "No TTY detected (SSH/headless context) — cannot hand off to Claude Code"
+  warn "Run fresh.sh directly instead: ~/fresh.sh"
+  exit 1
+fi
+
 # ── Hand off to Claude Code ─────────────────────────────────────────────────
 exec claude --dangerously-skip-permissions \
   "Run the /install command to set up this machine. All prerequisites are done (Xcode CLT, bare repo cloned, dotfiles checked out, Claude authenticated). The modules in ~/.dotfiles/modules/ need to be installed now."

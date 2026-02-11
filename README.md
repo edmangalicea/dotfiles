@@ -99,6 +99,8 @@ When installing in **VM Host** mode, the `/install` command orchestrates end-to-
 
 This flow incorporates battle-tested workarounds for Lume MCP limitations (creation timeouts, silent shared_dir failures, exec timeouts on long commands). See the `/install` command source for full details.
 
+> **Warning:** `lume create --unattended tahoe` must run to completion without interruption (~15-30 min). The tahoe preset uses VNC automation to complete macOS Setup Assistant — if interrupted, the automation cannot resume and SSH will never become available. If this happens, delete the VM and recreate from scratch.
+
 > **Note:** The `edmangalicea/vm-bootstrap` repo has been archived. Its VM creation and guest provisioning logic is now integrated here.
 
 ## What Happens During Install
@@ -172,7 +174,7 @@ Lines in `~/Brewfile` can be tagged with `@personal`, `@host`, and/or `@guest` i
 
 ```ruby
 brew "git"                  # no tag → included in all modes
-brew "lume"                 # @host @guest
+brew "sshpass"              # @host
 cask "cursor"               # @personal @guest
 cask "docker"               # @personal
 ```
@@ -269,6 +271,7 @@ If the install backed up conflicting files, they're in `~/.dotfiles-backup/<time
 |---------|-----|
 | `brew` not found after install | Run `eval "$(/opt/homebrew/bin/brew shellenv)"` or restart your terminal |
 | Xcode CLI Tools stuck | Delete `/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress` and retry |
+| Xcode CLT "softwareupdate found nothing" in VM | Fresh VMs need up to 5 min for the catalog to populate. Wait and retry: `touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress && softwareupdate -l` |
 | `config checkout` fails | Existing files conflict — check `~/.dotfiles-backup/` for your originals |
 | Powerlevel10k garbled | Install a Nerd Font: `brew install --cask font-meslo-lg-nerd-font`, then set it in your terminal |
 | Module failed | Re-run just that module: `source ~/.dotfiles/lib/utils.sh && source ~/.dotfiles/modules/NN-name.sh` |

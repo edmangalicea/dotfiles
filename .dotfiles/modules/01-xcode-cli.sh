@@ -22,11 +22,13 @@ PROD=$(softwareupdate -l 2>&1 | grep -B 1 -E 'Command Line Tools' | \
        grep -E '^\s+\*' | head -1 | sed 's/^[ *]*//' | sed 's/^ Label: //')
 
 if [[ -z "$PROD" ]]; then
-  # Retry softwareupdate discovery (VM may need time after boot)
+  # Retry softwareupdate discovery — fresh VMs need up to 5 min for the catalog to populate
+  local max_retries=20
+  local retry_delay=15
   local retries=0
-  while [[ -z "$PROD" ]] && (( retries < 3 )); do
-    log "softwareupdate didn't find CLI Tools yet — retrying in 10s (attempt $((retries + 1))/3)..."
-    sleep 10
+  while [[ -z "$PROD" ]] && (( retries < max_retries )); do
+    log "softwareupdate didn't find CLI Tools yet — retrying in ${retry_delay}s (attempt $((retries + 1))/${max_retries})..."
+    sleep "$retry_delay"
     PROD=$(softwareupdate -l 2>&1 | grep -B 1 -E 'Command Line Tools' | \
            grep -E '^\s+\*' | head -1 | sed 's/^[ *]*//' | sed 's/^ Label: //')
     retries=$((retries + 1))

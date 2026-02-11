@@ -20,13 +20,20 @@ You are managing a macOS virtual machine using **Lume** (Apple Virtualization fr
 
 ## Prerequisites
 
-Before any VM operation, verify `lume` is installed (`which lume`). If not found, suggest:
+Before any VM operation, verify `lume` is installed (`which lume`). If not found, install via the **official installer only** (do NOT use `brew install lume` — the Homebrew formula omits the resource bundle, causing `--unattended` presets to silently fail):
+
 ```bash
-brew install lume
-```
-Or if Homebrew is not available:
-```bash
+# Remove Homebrew version first if present
+brew uninstall lume 2>/dev/null || true
+# Install official lume with resource bundle
 curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/lume/scripts/install.sh | bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+Verify the resource bundle is intact:
+```bash
+ls ~/.local/bin/lume_lume.bundle/unattended-presets/
+# Should list tahoe.yml and other presets
 ```
 
 ## Step 1: Ask the user what they want to do
@@ -137,6 +144,8 @@ Confirm `sharedDirectories` contains the `~/shared` entry with `com.apple.virtio
 ```bash
 lume stop <NAME>
 ```
+
+> **Note:** `lume stop` normally returns exit code 130 (SIGINT). This is expected — the VM stops successfully despite the non-zero exit code. Do not treat this as an error.
 
 If the stop hangs or fails, find and kill the process:
 
@@ -350,6 +359,18 @@ sleep 2
 - The `sessions.json` file should show the shared directory config
 - In the guest macOS, check Finder sidebar under **Locations** or browse to `/Volumes/My Shared Files`
 - The `lume ls` shared_dirs column may show `-` even when shared dirs are active — check `sessions.json` instead
+
+### Unattended setup interrupted — SSH never becomes available
+
+If `lume create --unattended tahoe` was interrupted (stopped, killed, or timed out before completion), the VNC automation that completes macOS Setup Assistant cannot resume. SSH will never become available.
+
+**Fix:** Delete the VM and recreate from scratch. The creation process takes 15-30 minutes and must run to completion without interruption.
+
+```bash
+echo "y" | lume delete <NAME>
+lume create --ipsw latest --disk-size <SIZE>GB --unattended tahoe --no-display <NAME>
+# Wait 15-30 minutes for completion — do NOT interrupt
+```
 
 ### VM won't start after unclean shutdown
 Check for stale locks on both files:

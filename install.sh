@@ -257,6 +257,21 @@ if ! xcode-select -p &>/dev/null; then
   touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
   PROD=$(softwareupdate -l 2>&1 | grep -B 1 -E 'Command Line Tools' | \
          grep -E '^\s+\*' | head -1 | sed 's/^[ *]*//' | sed 's/^ Label: //')
+
+  if [[ -z "$PROD" ]]; then
+    # Retry — fresh VMs need up to 5 min for the software update catalog to populate
+    local max_retries=20
+    local retry_delay=15
+    local retries=0
+    while [[ -z "$PROD" ]] && (( retries < max_retries )); do
+      log "softwareupdate didn't find CLI Tools yet — retrying in ${retry_delay}s (attempt $((retries + 1))/${max_retries})..."
+      sleep "$retry_delay"
+      PROD=$(softwareupdate -l 2>&1 | grep -B 1 -E 'Command Line Tools' | \
+             grep -E '^\s+\*' | head -1 | sed 's/^[ *]*//' | sed 's/^ Label: //')
+      retries=$((retries + 1))
+    done
+  fi
+
   if [[ -n "$PROD" ]]; then
     log "Found update: $PROD"
     sudo softwareupdate -i "$PROD" --verbose
@@ -493,7 +508,7 @@ elif [[ -f "$MARKER_FAILURE" ]]; then
   warn "Run 'claude --init' manually to retry"
 fi
 
-if ! is_noninteractive && (( CLAUDE_OK )) && command -v claude &>/dev/null; then
+if ! is_noninteractive && [[ -t 0 && -t 1 ]] && (( CLAUDE_OK )) && command -v claude &>/dev/null; then
   echo ""
   echo "╔══════════════════════════════════════════════════════════════╗"
   echo "║  Prerequisites complete. Claude Code will take over and     ║"

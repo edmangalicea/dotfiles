@@ -182,6 +182,10 @@ Verify the MCP server is available by calling `lume_list_vms`. If it fails, warn
 3. **fresh.sh hangs at `exec claude --dangerously-skip-permissions`** — Set `DOTFILES_SKIP_CLAUDE_LAUNCH=1` to exit before the exec. (Also guarded by `DOTFILES_NONINTERACTIVE=1`.)
 4. **Lume REST API (`lume serve` on port 7777) does NOT support `unattended` on create** — Always use MCP `lume_create_vm` or CLI `lume create` for VM creation with unattended setup.
 5. **Cursor cask may fail with xattr permission error** — This is a known Homebrew/macOS SIP issue. If it fails, suggest: `brew install --cask cursor --no-quarantine`.
+6. **`lume create --unattended` must not be interrupted** — The tahoe preset uses VNC automation to complete macOS Setup Assistant. If the VM is stopped mid-creation (~15-30 min), the automation cannot resume and SSH will never become available. Fix: delete the VM and recreate from scratch.
+7. **Xcode CLT `softwareupdate` needs up to 5 min on fresh VMs** — The software update catalog takes time to populate after first boot. The install.sh retry logic (20x15s = 5 min) handles this, but if you are running install.sh from the remote repo (not yet pushed), the old retry window may be insufficient. **Workaround:** Pre-install Xcode CLT in the guest before running install.sh (see Phase 2, step 1b).
+8. **`lume stop` returns exit code 130** — This is normal (SIGINT). The VM stops successfully despite the non-zero exit code. Do not treat this as an error.
+9. **Guest install.sh uses the remote (GitHub) version** — Changes to install.sh/modules are only picked up by the guest if they have been committed and pushed to the remote repo. Local uncommitted changes on the host have no effect on the guest bootstrap.
 
 ### Phase 1: VM Creation (MCP preferred, CLI fallback)
 
@@ -264,6 +268,24 @@ Verify the MCP server is available by calling `lume_list_vms`. If it fails, warn
    lume_exec(vm_name=<NAME>, command="echo 'lume' | sudo -S sh -c 'echo \"lume ALL=(ALL) NOPASSWD:ALL\" > /etc/sudoers.d/lume && chmod 0440 /etc/sudoers.d/lume'")
    ```
 
+1b. **Pre-install Xcode CLT** (workaround #7 — the software update catalog takes up to 5 min to populate on fresh VMs, and the remote install.sh may not have sufficient retry logic):
+   ```
+   lume_exec(vm_name=<NAME>, command="touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress && softwareupdate -l 2>&1 | grep 'Command Line Tools'")
+   ```
+   If the output is empty, retry via polling every 15 seconds for up to 5 minutes:
+   ```bash
+   for i in $(seq 1 20); do
+     RESULT=$(sshpass -p lume ssh -o StrictHostKeyChecking=no lume@<IP> "softwareupdate -l 2>&1 | grep -B1 'Command Line Tools' | grep '^\s*\*' | head -1 | sed 's/^[ *]*//' | sed 's/^ Label: //'")
+     [[ -n "$RESULT" ]] && break
+     sleep 15
+   done
+   ```
+   Once found, install it (this takes 1-2 min and will timeout via MCP — use nohup):
+   ```
+   lume_exec(vm_name=<NAME>, command="nohup sudo softwareupdate -i '<LABEL>' --verbose > /tmp/xcode-install.log 2>&1 &")
+   ```
+   Poll for completion by checking `xcode-select -p` every 15 seconds. Once it returns `/Library/Developer/CommandLineTools`, proceed.
+
 2. **Run install.sh** with non-interactive flags:
    ```
    lume_exec(vm_name=<NAME>, command="DOTFILES_INSTALL_MODE=guest DOTFILES_NONINTERACTIVE=1 zsh -c \"$(curl -fsSL https://raw.githubusercontent.com/edmangalicea/dotfiles/main/install.sh)\"")
@@ -279,6 +301,20 @@ Verify the MCP server is available by calling `lume_list_vms`. If it fails, warn
    lume_exec(vm_name=<NAME>, command="nohup zsh -c 'source $HOME/.dotfiles/lib/utils.sh && DOTFILES_INSTALL_MODE=guest DOTFILES_NONINTERACTIVE=1 DOTFILES_SKIP_CLAUDE_LAUNCH=1 $HOME/fresh.sh' > /tmp/fresh-install.log 2>&1 &")
    ```
    If not cloned, the install.sh may still be running. Wait and retry.
+
+3b. **Open a streaming terminal window** for real-time visibility into the guest install (the user sees nothing otherwise for 15+ min). Get the VM IP first, then open a Terminal window via osascript:
+   ```bash
+   VM_IP=$(lume ls 2>/dev/null | grep <NAME> | awk '{print $3}')
+   STREAM_WINDOW_ID=$(osascript -e 'tell application "Terminal"' -e 'activate' -e "do script \"sshpass -p lume ssh -o StrictHostKeyChecking=no lume@${VM_IP} 'tail -f /tmp/fresh-install.log'\"" -e 'return id of front window' -e 'end tell' 2>/dev/null) || STREAM_WINDOW_ID=""
+   ```
+   If osascript fails (headless context), skip the streaming window — fall back to polling only. Save the window ID so it can be closed after fresh.sh completes.
+
+   After step 4 confirms fresh.sh is DONE, close the streaming window:
+   ```bash
+   if [[ -n "$STREAM_WINDOW_ID" ]]; then
+     osascript -e 'tell application "Terminal"' -e "repeat with w in windows" -e "if id of w is $STREAM_WINDOW_ID then" -e "close w" -e "exit repeat" -e "end if" -e "end repeat" -e 'end tell' 2>/dev/null || true
+   fi
+   ```
 
 4. **Poll fresh.sh progress** every 60 seconds (workaround #5):
    ```
