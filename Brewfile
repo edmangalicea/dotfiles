@@ -31,8 +31,6 @@ brew "go"                                                # @personal @guest
 brew "himalaya"                                          # @guest
 # Lightweight and flexible command-line JSON processor
 brew "jq"
-# Create and manage Apple Silicon-native virtual machines
-brew "lume"                                              # @host @guest
 # Non-interactive SSH password authentication
 brew "sshpass"                                           # @host
 # Mac App Store command-line interface

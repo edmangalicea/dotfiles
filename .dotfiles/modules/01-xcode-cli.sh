@@ -21,6 +21,18 @@ touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
 PROD=$(softwareupdate -l 2>&1 | grep -B 1 -E 'Command Line Tools' | \
        grep -E '^\s+\*' | head -1 | sed 's/^[ *]*//' | sed 's/^ Label: //')
 
+if [[ -z "$PROD" ]]; then
+  # Retry softwareupdate discovery (VM may need time after boot)
+  local retries=0
+  while [[ -z "$PROD" ]] && (( retries < 3 )); do
+    log "softwareupdate didn't find CLI Tools yet — retrying in 10s (attempt $((retries + 1))/3)..."
+    sleep 10
+    PROD=$(softwareupdate -l 2>&1 | grep -B 1 -E 'Command Line Tools' | \
+           grep -E '^\s+\*' | head -1 | sed 's/^[ *]*//' | sed 's/^ Label: //')
+    retries=$((retries + 1))
+  done
+fi
+
 if [[ -n "$PROD" ]]; then
   log "Found update: $PROD"
   spin "Installing $PROD..." sudo softwareupdate -i "$PROD" --verbose
@@ -29,12 +41,22 @@ else
   rm -f /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
   if is_dry_run; then
     log "[DRY RUN] Would fall back to xcode-select --install"
+  elif [[ "${DOTFILES_NONINTERACTIVE:-0}" == "1" ]]; then
+    fail "softwareupdate couldn't find CLI Tools and xcode-select --install requires GUI interaction"
+    fail "Run manually: sudo softwareupdate -i 'Command Line Tools for Xcode ...' --agree-to-license"
+    return 1
   else
     warn "softwareupdate couldn't find CLI Tools, falling back to xcode-select --install"
     xcode-select --install
     log "Waiting for Xcode CLI Tools installation to complete..."
+    local xclt_elapsed=0
     until xcode-select -p &>/dev/null; do
       sleep 5
+      xclt_elapsed=$((xclt_elapsed + 5))
+      if (( xclt_elapsed > 600 )); then
+        fail "Xcode CLI Tools installation timed out after 10 minutes"
+        return 1
+      fi
     done
   fi
 fi

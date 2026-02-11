@@ -4,17 +4,13 @@
   },
   "permissions": {
     "allow": [
-   "*"
+      "*"
     ],
-    "deny": [
-
-    ]
+    "deny": []
   },
   "hooks": {
     "PreToolUse": [
-      {
-        
-      }
+      {}
     ]
   },
   "statusLine": {

@@ -132,6 +132,11 @@ if [[ "${DOTFILES_SKIP_CLAUDE_LAUNCH:-0}" == "1" ]]; then
   exit 0
 fi
 
+if [[ "${DOTFILES_NONINTERACTIVE:-0}" == "1" ]]; then
+  log "Non-interactive mode — skipping Claude Code launch"
+  exit 0
+fi
+
 if command -v claude &>/dev/null; then
   log "Launching Claude Code to continue setup..."
   exec claude --dangerously-skip-permissions

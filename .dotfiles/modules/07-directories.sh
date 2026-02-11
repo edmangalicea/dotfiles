@@ -14,6 +14,12 @@ if [[ "$mode" == "host" || "$mode" == "guest" ]]; then
   ok "~/shared exists (VM shared directory)"
 fi
 
+# ── IPSW cache directory (avoids re-downloading 17 GB on each VM create) ──
+if [[ "$mode" == "host" ]]; then
+  mkdir -p /Users/Shared/ipsw
+  ok "/Users/Shared/ipsw exists (IPSW cache)"
+fi
+
 # ── SSH directory ────────────────────────────────────────────────────────────
 mkdir -p "$HOME/.ssh"
 chmod 700 "$HOME/.ssh"

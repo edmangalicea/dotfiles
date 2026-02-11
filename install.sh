@@ -254,12 +254,20 @@ disown
 
 if ! xcode-select -p &>/dev/null; then
   log "Installing Xcode Command Line Tools..."
-  xcode-select --install 2>/dev/null
-
-  # Wait for the installation to complete
-  until xcode-select -p &>/dev/null; do
-    sleep 5
-  done
+  touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
+  PROD=$(softwareupdate -l 2>&1 | grep -B 1 -E 'Command Line Tools' | \
+         grep -E '^\s+\*' | head -1 | sed 's/^[ *]*//' | sed 's/^ Label: //')
+  if [[ -n "$PROD" ]]; then
+    log "Found update: $PROD"
+    sudo softwareupdate -i "$PROD" --verbose
+  elif ! is_noninteractive; then
+    xcode-select --install
+    until xcode-select -p &>/dev/null; do sleep 5; done
+  else
+    rm -f /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
+    die "Cannot install Xcode CLT non-interactively (softwareupdate found nothing)"
+  fi
+  rm -f /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
   log "Xcode Command Line Tools installed"
 else
   log "Xcode Command Line Tools already installed"
