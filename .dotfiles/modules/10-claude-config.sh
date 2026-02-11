@@ -81,7 +81,6 @@ fi
 
 # ── Phase 3: Existing installation guardrails ─────────────────────────────
 local _backup_dir=""
-local _preserved_pat=""
 local _daemon_existed=0
 
 if [[ -f "$PLIST_FILE" ]]; then
@@ -98,33 +97,7 @@ if [[ -f "$SETTINGS_FILE" ]]; then
     log "Backed up existing Claude config to $_backup_dir"
   fi
 
-  # 3b. Detect existing GitHub PAT (not placeholder)
-  if command -v python3 &>/dev/null; then
-    _preserved_pat="$(python3 -c "
-import json, sys
-try:
-    d = json.load(open('$SETTINGS_FILE'))
-    pat = d.get('env', {}).get('GITHUB_PERSONAL_ACCESS_TOKEN', '')
-    if pat and pat != '<YOUR_GITHUB_PAT_HERE>':
-        print(pat)
-except Exception:
-    pass
-" 2>/dev/null)"
-  else
-    # Fallback: grep for a token-like value
-    if grep -q '"GITHUB_PERSONAL_ACCESS_TOKEN"' "$SETTINGS_FILE" 2>/dev/null; then
-      if ! grep -q '<YOUR_GITHUB_PAT_HERE>' "$SETTINGS_FILE" 2>/dev/null; then
-        _preserved_pat="__detected_but_no_python3__"
-        warn "python3 not found; PAT detected but cannot extract it reliably"
-      fi
-    fi
-  fi
-
-  if [[ -n "$_preserved_pat" && "$_preserved_pat" != "__detected_but_no_python3__" ]]; then
-    log "Existing GitHub PAT detected — will verify preservation after restore"
-  fi
-
-  # 3c. Log local-only files not in backup repo
+  # 3b. Log local-only files not in backup repo
   if [[ -d "$BACKUP_REPO/global" ]]; then
     for subdir in hooks commands agents; do
       local _local_dir="$CLAUDE_DIR/$subdir"
@@ -140,7 +113,7 @@ except Exception:
     done
   fi
 
-  # 3d. Daemon collision noted (used in Phase 5)
+  # 3c. Daemon collision noted (used in Phase 5)
   if (( _daemon_existed )); then
     log "Existing auto-sync daemon plist detected"
   fi
@@ -181,58 +154,26 @@ fi
 
 # ── Phase 6: Post-restore verification ────────────────────────────────────
 if ! is_dry_run; then
-  # 6a. PAT safety net
-  if [[ -n "$_preserved_pat" && "$_preserved_pat" != "__detected_but_no_python3__" && -f "$SETTINGS_FILE" ]]; then
-    local _current_pat=""
-    if command -v python3 &>/dev/null; then
-      _current_pat="$(python3 -c "
-import json, sys
-try:
-    d = json.load(open('$SETTINGS_FILE'))
-    pat = d.get('env', {}).get('GITHUB_PERSONAL_ACCESS_TOKEN', '')
-    print(pat)
-except Exception:
-    pass
-" 2>/dev/null)"
-    fi
-
-    if [[ "$_current_pat" == "<YOUR_GITHUB_PAT_HERE>" || -z "$_current_pat" ]]; then
-      warn "PAT was lost during restore — restoring from backup"
-      if command -v python3 &>/dev/null; then
-        python3 -c "
-import json
-with open('$SETTINGS_FILE', 'r') as f:
-    d = json.load(f)
-d.setdefault('env', {})['GITHUB_PERSONAL_ACCESS_TOKEN'] = '''$_preserved_pat'''
-with open('$SETTINGS_FILE', 'w') as f:
-    json.dump(d, f, indent=2)
-" 2>/dev/null && ok "PAT restored from backup" || fail "Failed to restore PAT automatically"
-      else
-        warn "python3 not available — manually restore PAT from backup: $_backup_dir"
-      fi
-    fi
-  fi
-
-  # 6b. Check claude CLI exists
+  # 6a. Check claude CLI exists
   if command -v claude &>/dev/null; then
     ok "claude CLI found"
   else
     warn "claude CLI not found in PATH"
   fi
 
-  # 6c. Check PAT placeholder
+  # 6b. Check PAT placeholder
   if [[ -f "$SETTINGS_FILE" ]]; then
     if grep -q '<YOUR_GITHUB_PAT_HERE>' "$SETTINGS_FILE" 2>/dev/null; then
       warn "GitHub PAT is still a placeholder in $SETTINGS_FILE — update it with a real token"
     fi
   fi
 
-  # 6d. Check macos-trash
+  # 6c. Check macos-trash
   if ! command -v macos-trash &>/dev/null; then
     warn "macos-trash not installed (recommended) — run: brew install macos-trash"
   fi
 
-  # 6e. Log backup location
+  # 6d. Log backup location
   if [[ -n "$_backup_dir" && -d "$_backup_dir" ]]; then
     log "Rollback backup available at: $_backup_dir"
   fi
