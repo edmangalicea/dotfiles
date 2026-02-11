@@ -89,8 +89,14 @@ if ! is_noninteractive; then
       ;;
   esac
 else
-  log "Non-interactive mode — proceeding with full install"
-  export DOTFILES_DRY_RUN=0
+  if [[ "${DOTFILES_DRY_RUN:-0}" == "1" ]]; then
+    export DOTFILES_DRY_RUN=1
+    export DOTFILES_LOG="/dev/null"
+    log "Non-interactive mode — dry run"
+  else
+    log "Non-interactive mode — proceeding with full install"
+    export DOTFILES_DRY_RUN=0
+  fi
 fi
 
 is_dry_run_mode() { [[ "${DOTFILES_DRY_RUN:-0}" == "1" ]]; }
