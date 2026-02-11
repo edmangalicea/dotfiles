@@ -36,6 +36,45 @@ ls ~/.local/bin/lume_lume.bundle/unattended-presets/
 # Should list tahoe.yml and other presets
 ```
 
+## IPSW Management — CRITICAL
+
+**NEVER pass `--ipsw latest` to `lume create`.** This downloads ~17 GB to a temp folder that is discarded after creation.
+
+Instead, always follow this procedure:
+
+1. Check for a cached IPSW:
+   ```bash
+   IPSW_CACHE="/Users/Shared/ipsw"
+   IPSW_FILE="$IPSW_CACHE/latest.ipsw"
+   ```
+
+2. If the file exists, use it directly:
+   ```bash
+   if [[ -f "$IPSW_FILE" ]]; then
+     echo "Using cached IPSW: $IPSW_FILE ($(du -h "$IPSW_FILE" | cut -f1))"
+   fi
+   ```
+
+3. If NOT found, ask the user if they have an IPSW file elsewhere. If they provide a path, use it and copy to cache:
+   ```bash
+   cp "<USER_PATH>" "$IPSW_FILE"
+   ```
+
+4. If no local file exists anywhere, download it to the cache FIRST, then use it:
+   ```bash
+   mkdir -p "$IPSW_CACHE"
+   lume pull ipsw latest --output "$IPSW_FILE"
+   # If lume pull is not available, use:
+   # lume create --ipsw latest --disk-size 50GB temp-ipsw-download
+   # Then find and move the IPSW from the temp location to $IPSW_FILE
+   # echo "y" | lume delete temp-ipsw-download
+   ```
+
+5. Then create the VM with the local file:
+   ```bash
+   lume create --ipsw "$IPSW_FILE" --disk-size <SIZE>GB <NAME>
+   ```
+
 ## Step 1: Ask the user what they want to do
 
 Present options using paginated AskUserQuestion calls (max 4 options per call).
@@ -69,13 +108,13 @@ If the user picks "More options..." on Page 2, show **Page 3**:
 mkdir -p ~/shared
 ```
 
-4. Ask the user for the IPSW path or use `--ipsw latest` (default). If the user has a local IPSW, use `--ipsw <PATH>`. Otherwise:
+4. Follow the **IPSW Management** procedure above to obtain a local IPSW file (`$IPSW_FILE`). Then create the VM:
 
 ```bash
-lume create --disk-size <SIZE>GB --ipsw latest <NAME>
+lume create --disk-size <SIZE>GB --ipsw "$IPSW_FILE" <NAME>
 ```
 
-This command takes a long time (downloads macOS IPSW + installs). Run it with a 10-minute timeout.
+This command takes a long time (installs macOS). Run it with a 10-minute timeout.
 
 5. Once created, immediately start it with the shared drive:
 
@@ -257,13 +296,13 @@ Creates a brand-new VM from scratch using the local macOS IPSW restore image. Th
 mkdir -p ~/shared
 ```
 
-4. Ask the user for the IPSW path or use `--ipsw latest` (default). If the user has a local IPSW file, use `--ipsw <PATH>`. Otherwise:
+4. Follow the **IPSW Management** procedure above to obtain a local IPSW file (`$IPSW_FILE`). Then create the VM:
 
 ```bash
-lume create --disk-size <SIZE>GB --ipsw latest <NAME>
+lume create --disk-size <SIZE>GB --ipsw "$IPSW_FILE" <NAME>
 ```
 
-This command takes a long time (downloads macOS IPSW + installs). Run it with a 10-minute timeout.
+This command takes a long time (installs macOS). Run it with a 10-minute timeout.
 
 5. Once created, immediately start it with the shared drive:
 
@@ -315,10 +354,10 @@ curl -fsSL "https://raw.githubusercontent.com/trycua/cua/main/libs/lume/resource
 
 5. Check if a VM with the same name already exists via `lume ls`. If so, ask whether to delete and recreate it.
 
-6. Create the VM via CLI (**do not use MCP** — `lume_create_vm` with `unattended` always times out):
+6. Follow the **IPSW Management** procedure above to obtain a local IPSW file (`$IPSW_FILE`). Then create the VM via CLI (**do not use MCP** — `lume_create_vm` with `unattended` always times out):
 
 ```bash
-lume create --ipsw latest --disk-size <SIZE>GB --unattended /tmp/lume-unattended-tahoe.yml --no-display <NAME>
+lume create --ipsw "$IPSW_FILE" --disk-size <SIZE>GB --unattended /tmp/lume-unattended-tahoe.yml --no-display <NAME>
 ```
 
 Run with `timeout: 600000` and `run_in_background: true`. Poll progress via `lume ls` every 90 seconds. Creation takes 15-30 minutes.
@@ -368,7 +407,8 @@ If `lume create --unattended tahoe` was interrupted (stopped, killed, or timed o
 
 ```bash
 echo "y" | lume delete <NAME>
-lume create --ipsw latest --disk-size <SIZE>GB --unattended tahoe --no-display <NAME>
+# Follow IPSW Management procedure to obtain $IPSW_FILE, then:
+lume create --ipsw "$IPSW_FILE" --disk-size <SIZE>GB --unattended tahoe --no-display <NAME>
 # Wait 15-30 minutes for completion — do NOT interrupt
 ```
 

@@ -10,6 +10,19 @@
 #   5. Checks out dotfiles into $HOME
 #   6. Hands off to fresh.sh for tool installation
 
+# ── IPSW Caching Rule ────────────────────────────────────────────────────────
+# When creating Lume VMs, NEVER use `--ipsw latest` directly with `lume create`.
+# `--ipsw latest` downloads ~17 GB to a temp folder that is discarded after VM
+# creation, wasting bandwidth on every rebuild.
+#
+# Instead:
+#   1. Check for cached IPSW at /Users/Shared/ipsw/latest.ipsw
+#   2. If not found, ask the user or download to the cache FIRST
+#   3. Then pass the local file path: --ipsw /Users/Shared/ipsw/latest.ipsw
+#
+# The cache directory is created by 07-directories.sh (host mode).
+# See ~/.claude/commands/vm.md "IPSW Management" section for full procedure.
+
 set -o pipefail
 
 DOTFILES_LOG="$HOME/.dotfiles-install.log"

@@ -200,7 +200,7 @@ Verify the MCP server is available by calling `lume_list_vms`. If it fails, warn
 
 3. Check if a VM with the same name already exists via `lume_list_vms` (or `lume ls`). If it does, ask the user whether to delete and recreate it or use a different name. To delete: `lume_delete_vm(name=<NAME>)` or `echo "y" | lume delete <NAME>`.
 
-4. **Check for cached IPSW** (avoids re-downloading 17 GB):
+4. **Check for cached IPSW** — **NEVER pass `--ipsw latest` to `lume create`** (it downloads ~17 GB to a temp folder that is discarded after creation):
    ```bash
    IPSW_CACHE="/Users/Shared/ipsw"
    IPSW_FILE="$IPSW_CACHE/latest.ipsw"
@@ -208,11 +208,25 @@ Verify the MCP server is available by calling `lume_list_vms`. If it fails, warn
    if [[ -f "$IPSW_FILE" ]]; then
      echo "Using cached IPSW: $IPSW_FILE ($(du -h "$IPSW_FILE" | cut -f1))"
      IPSW_ARG="$IPSW_FILE"
-   else
-     echo "No cached IPSW — will download (~17 GB, ~15 min)"
-     IPSW_ARG="latest"
    fi
    ```
+
+   If the cached IPSW is NOT found, ask the user: "Do you have a macOS IPSW file? Provide the path, or leave empty to download (~17 GB)."
+
+   - If the user provides a path, copy it to the cache and use it:
+     ```bash
+     cp "<USER_PATH>" "$IPSW_FILE"
+     IPSW_ARG="$IPSW_FILE"
+     ```
+
+   - If no local file exists anywhere, download to the cache FIRST, then use it:
+     ```bash
+     echo "No cached IPSW found. Downloading to $IPSW_FILE (~17 GB)..."
+     lume pull ipsw latest --output "$IPSW_FILE"
+     # Fallback if lume pull unavailable:
+     # curl -fsSL -o "$IPSW_FILE" "$(lume ipsw-url latest)"
+     IPSW_ARG="$IPSW_FILE"
+     ```
 
 5. **Create the VM via MCP** (preferred):
    ```
@@ -228,18 +242,7 @@ Verify the MCP server is available by calling `lume_list_vms`. If it fails, warn
 
 6. **Poll creation progress** every 90 seconds using `lume_get_vm(name=<NAME>)` or `lume ls`. Look for the VM status to change from creating to stopped/ready. Creation typically takes 15-30 minutes.
 
-7. **Cache the IPSW** for future use (if not already cached):
-   ```bash
-   if [[ ! -f "$IPSW_FILE" ]]; then
-     TEMP_IPSW=$(find /private/var/folders -maxdepth 4 -name "latest.ipsw" 2>/dev/null | head -1)
-     if [[ -n "$TEMP_IPSW" ]]; then
-       cp "$TEMP_IPSW" "$IPSW_FILE"
-       echo "Cached IPSW to $IPSW_FILE for future use"
-     fi
-   fi
-   ```
-
-8. **Start the VM** via MCP or CLI:
+7. **Start the VM** via MCP or CLI:
    ```
    lume_run_vm(name=<NAME>, shared_dir="$HOME/shared", no_display=true)
    ```
@@ -249,13 +252,13 @@ Verify the MCP server is available by calling `lume_list_vms`. If it fails, warn
    ```
    Run in background. Wait 30 seconds, then verify with `lume_get_vm` or `lume ls`.
 
-9. Verify SSH connectivity via MCP:
+8. Verify SSH connectivity via MCP:
    ```
    lume_exec(vm_name=<NAME>, command="whoami")
    ```
    Expected output: `lume`. If it fails, retry a few times with 15-second delays (VM may still be booting).
 
-10. Verify shared directory is mounted:
+9. Verify shared directory is mounted:
     ```
     lume_exec(vm_name=<NAME>, command="ls /Volumes/")
     ```
