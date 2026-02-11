@@ -114,16 +114,25 @@ is_force_install() {
 # Returns the machine type: personal, host, or guest
 # Checks env var first, then file, defaults to personal
 get_install_mode() {
+  local mode
   if [[ -n "${DOTFILES_INSTALL_MODE:-}" ]]; then
-    echo "$DOTFILES_INSTALL_MODE"
-    return 0
+    mode="$DOTFILES_INSTALL_MODE"
+  else
+    local mode_file="$HOME/.dotfiles/.install-mode"
+    if [[ -f "$mode_file" ]]; then
+      mode="$(< "$mode_file")"
+    else
+      mode="personal"
+    fi
   fi
-  local mode_file="$HOME/.dotfiles/.install-mode"
-  if [[ -f "$mode_file" ]]; then
-    cat "$mode_file"
-    return 0
-  fi
-  echo "personal"
+  case "$mode" in
+    personal|host|guest) ;;
+    *)
+      warn "Invalid install mode '$mode' — defaulting to personal"
+      mode="personal"
+      ;;
+  esac
+  echo "$mode"
 }
 
 # Check if a module should run for the given machine type
