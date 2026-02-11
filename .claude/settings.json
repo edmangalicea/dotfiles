@@ -9,9 +9,7 @@
     "deny": []
   },
   "hooks": {
-    "PreToolUse": [
-      {}
-    ]
+    "PreToolUse": []
   },
   "statusLine": {
     "type": "command",
