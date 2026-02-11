@@ -242,15 +242,12 @@ Verify the MCP server is available by calling `lume_list_vms`. If it fails, warn
 
 6. **Poll creation progress** every 90 seconds using `lume_get_vm(name=<NAME>)` or `lume ls`. Look for the VM status to change from creating to stopped/ready. Creation typically takes 15-30 minutes.
 
-7. **Start the VM** via MCP or CLI:
-   ```
-   lume_run_vm(name=<NAME>, shared_dir="$HOME/shared", no_display=true)
-   ```
-   **CLI fallback:**
+7. **Start the VM** via CLI (**do not use MCP `lume_run_vm`** — `shared_dir` silently fails to mount):
    ```bash
+   mkdir -p ~/shared
    lume run <NAME> --shared-dir $HOME/shared:rw --no-display
    ```
-   Run in background. Wait 30 seconds, then verify with `lume_get_vm` or `lume ls`.
+   Run in background. Wait 30 seconds, then verify with `lume_get_vm` or `lume ls`. Confirm shared directory is mounted by checking `sessions.json`.
 
 8. Verify SSH connectivity via MCP:
    ```

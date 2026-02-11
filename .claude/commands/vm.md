@@ -75,6 +75,23 @@ Instead, always follow this procedure:
    lume create --ipsw "$IPSW_FILE" --disk-size <SIZE>GB <NAME>
    ```
 
+## Shared Directory — CRITICAL
+
+**ALWAYS start VMs with `--shared-dir ~/shared:rw`.** Every `lume run` command must include it.
+
+**Do NOT use MCP `lume_run_vm` with `shared_dir`** — it silently fails to mount the directory. Always use the CLI:
+
+```bash
+mkdir -p ~/shared
+lume run <NAME> --shared-dir ~/shared:rw --no-display
+```
+
+Before any VM start, ensure `~/shared` exists. After starting, verify via:
+```bash
+cat ~/.lume/<NAME>/sessions.json
+# Confirm sharedDirectories contains the ~/shared entry
+```
+
 ## Step 1: Ask the user what they want to do
 
 Present options using paginated AskUserQuestion calls (max 4 options per call).
@@ -362,7 +379,7 @@ lume create --ipsw "$IPSW_FILE" --disk-size <SIZE>GB --unattended /tmp/lume-unat
 
 Run with `timeout: 600000` and `run_in_background: true`. Poll progress via `lume ls` every 90 seconds. Creation takes 15-30 minutes.
 
-7. Once created, start with shared directory (**do not use MCP `lume_run_vm`** — `shared_dir` silently fails):
+7. Once created, start with shared directory:
 
 ```bash
 lume run <NAME> --shared-dir $HOME/shared:rw --no-display
