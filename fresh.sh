@@ -145,9 +145,6 @@ fi
 # Fallback: if claude is not installed, print manual post-install steps
 echo ""
 echo "Post-install manual steps:"
-echo "  1. Generate SSH key:  ssh-keygen -t ed25519 -C \"edmangalicea@gmail.com\""
-echo "  2. Add to GitHub:     cat ~/.ssh/id_ed25519.pub | pbcopy"
-echo "  3. Switch to SSH:     config remote set-url origin git@github.com:edmangalicea/dotfiles.git"
-echo "  4. GitHub CLI auth:   gh auth login"
+echo "  1. GitHub CLI auth:   gh auth login"
 echo ""
 echo "Restart your terminal to load the new shell configuration."

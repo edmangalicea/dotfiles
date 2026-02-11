@@ -308,8 +308,7 @@ Show a VM details box:
 ║                                                              ║
 ║  Manual steps remaining:                                     ║
 ║    1. Claude Code auth:  ssh in, run `claude --init`         ║
-║    2. SSH key:           ssh-keygen -t ed25519               ║
-║    3. GitHub CLI:        gh auth login                       ║
+║    2. GitHub CLI:        gh auth login                       ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
@@ -338,10 +337,7 @@ Guest:      Bootstrap complete / pending manual install
 
 Present the post-install steps:
 
-1. **Generate SSH key**: `ssh-keygen -t ed25519 -C "edmangalicea@gmail.com"`
-2. **Add key to GitHub**: `cat ~/.ssh/id_ed25519.pub | pbcopy` then paste at github.com/settings/keys
-3. **Switch dotfiles remote to SSH**: `config remote set-url origin git@github.com:edmangalicea/dotfiles.git`
-4. **Authenticate GitHub CLI**: If `gh auth status` already succeeds (authentication was completed during module 10's gh auth gate), tell the user it's already done and skip. Otherwise, use the same **gh auth gate** auto-open procedure from module 10 to open a Terminal window for `gh auth login`.
+1. **Authenticate GitHub CLI**: If `gh auth status` already succeeds (authentication was completed during module 10's gh auth gate), tell the user it's already done and skip. Otherwise, use the same **gh auth gate** auto-open procedure from module 10 to open a Terminal window for `gh auth login`.
 
 Ask the user: "Would you like help with any of these post-install steps?" If yes, walk them through the ones they choose.
 
