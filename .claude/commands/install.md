@@ -93,7 +93,42 @@ Track results for each module: **succeeded**, **skipped** (already done or not a
 
 9. **09-dock** *(Personal, Guest only)* — Ask the user: "Configure the Dock layout? (sets specific apps, clears defaults)" Requires `dockutil` (installed by Brewfile). If they decline, mark as **declined**.
 
-10. **10-claude-config** *(Personal, Guest only)* — This module restores Claude Code configuration from the backup repo. It requires `gh auth status` to succeed. Before running this module, perform the **gh auth gate** procedure below. If auth succeeds, run the module. If auth fails, times out, or the user declines, mark as **skipped**.
+10. **10-claude-config** *(Personal, Guest only)* — This module restores Claude Code configuration from the backup repo. It requires `gh auth status` to succeed. Before running this module, perform the **gh auth gate** procedure below. If auth succeeds, continue to the **branch selection** step before running the module. If auth fails, times out, or the user declines, mark as **skipped**.
+
+#### Branch selection (before running module 10)
+
+After gh auth succeeds, clone the repo first (Phase 1 only) so remote branches are available, then let the user pick which branch to restore config from:
+
+1. **Run Phase 1 (clone only)** — Execute the module with `CLAUDE_BACKUP_BRANCH=__skip__` to trigger only the clone, then abort before Phase 2. In practice, just clone directly:
+   ```bash
+   if [[ ! -d "$HOME/claude-code-backup/.git" ]]; then
+     gh repo clone edmangalicea/claude-code-backup "$HOME/claude-code-backup"
+   fi
+   ```
+
+2. **Fetch all remote branches and list them**:
+   ```bash
+   git -C ~/claude-code-backup fetch --all 2>/dev/null
+   git -C ~/claude-code-backup branch -r --format='%(refname:short)' | sed 's|origin/||' | grep -v HEAD
+   ```
+
+3. **Determine the recommended default** — Compute the hostname-derived branch:
+   ```bash
+   _hostname_branch="$(hostname -s | tr '[:upper:]' '[:lower:]')"
+   ```
+   If `$_hostname_branch` exists in the remote branch list, mark it as `(Recommended)`. Otherwise, mark `main` as `(Recommended)`.
+
+4. **Present branches to the user** via `AskUserQuestion`. List the available remote branches as options (up to 4, with the recommended one first). Include the hostname-derived branch name even if it doesn't exist remotely (it will be created as a new branch). Example:
+
+   - **mybranch (Recommended)** — "Matches this machine's hostname"
+   - **main** — "Default branch"
+   - **other-machine** — "Config from other-machine"
+
+5. **Run module 10 with the selected branch**:
+   ```bash
+   zsh -c 'source ~/.dotfiles/lib/utils.sh && CLAUDE_BACKUP_BRANCH=<selected> source ~/.dotfiles/modules/10-claude-config.sh'
+   ```
+   The module's Phase 2 will use `CLAUDE_BACKUP_BRANCH` instead of deriving the branch from hostname.
 
 #### gh auth gate (before module 10)
 

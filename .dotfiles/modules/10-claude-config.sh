@@ -57,7 +57,7 @@ fi
 
 # ── Phase 2: Switch to machine branch ─────────────────────────────────────
 local _branch
-_branch="$(hostname -s | tr '[:upper:]' '[:lower:]')"
+_branch="${CLAUDE_BACKUP_BRANCH:-$(hostname -s | tr '[:upper:]' '[:lower:]')}"
 
 if ! is_dry_run; then
   local _current_branch
